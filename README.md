@@ -109,8 +109,10 @@ bytecode
 --------
 
 ```raku
-
+my $b = $M.bytecode;
 ```
+
+Returns the `Buf` with the bytecode.
 
 slice
 -----

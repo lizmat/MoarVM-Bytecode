@@ -254,7 +254,11 @@ Returns the numeric version of this bytecode.  Most likely "7".
 
 =begin code :lang<raku>
 
+my $b = $M.bytecode;
+
 =end code
+
+Returns the C<Buf> with the bytecode.
 
 =head2 slice
 
