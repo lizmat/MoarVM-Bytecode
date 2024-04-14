@@ -122,7 +122,12 @@ class MoarVM::Bytecode {
 
     method blib() { $*EXECUTABLE.parent(3).add("blib") }
     method setting(str $version = "c") {
-        self.blib.add("CORE.$version.setting.moarvm")
+        my $setting = self.blib.add("CORE.$version.setting.moarvm");
+        $setting.s
+          ?? $setting
+          !! $*EXECUTABLE.parent(2).add(
+               "share/perl6/runtime/CORE.$version.setting.moarvm"
+             )
     }
 }
 
