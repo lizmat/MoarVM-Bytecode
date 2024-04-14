@@ -1,0 +1,6 @@
+use Test;
+use MoarVM::Bytecode;
+
+pass "replace me";
+
+done-testing;

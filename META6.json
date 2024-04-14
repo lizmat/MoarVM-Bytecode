@@ -1,0 +1,25 @@
+{
+  "auth": "zef:lizmat",
+  "authors": [
+    "Elizabeth Mattijsen"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "Provide introspection into MoarVM bytecode",
+  "license": "Artistic-2.0",
+  "name": "MoarVM::Bytecode",
+  "perl": "6.d",
+  "provides": {
+    "MoarVM::Bytecode": "lib/MoarVM/Bytecode.rakumod"
+  },
+  "resources": [
+  ],
+  "source-url": "https://github.com/lizmat/MoarVM-Bytecode.git",
+  "tags": [
+  ],
+  "test-depends": [
+  ],
+  "version": "0.0.1"
+}
