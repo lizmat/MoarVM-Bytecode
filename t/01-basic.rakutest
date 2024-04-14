@@ -1,6 +1,10 @@
 use Test;
 use MoarVM::Bytecode;
 
-pass "replace me";
+plan 2;
 
-done-testing;
+my $M := MoarVM::Bytecode.new("c");
+is $M.version,   7,     "Is it the correct version";
+is $M.hll-name, "Raku", "Is it the correct HLL";
+
+# vim: expandtab shiftwidth=4
