@@ -91,13 +91,6 @@ class MoarVM::Bytecode {
     }
 }
 
-my $M := MoarVM::Bytecode.new("blib/CORE.c.setting.moarvm");
-say $M.hexdump($M.string_heap_offset);
-say $M.str($M.hll_name_offset);
-say $M.hll_name_offset;
-
-
-
 =begin pod
 
 =head1 NAME
