@@ -93,6 +93,15 @@ say $M.hll-name;     # most likely "Raku"
 
 Returns the HLL language name for this bytecode. Most likely "Raku", or "nqp".
 
+sc-dependencies
+---------------
+
+```raku
+.say for $M.sc-dependencies;  # identifiers for Serialization Context
+```
+
+Returns an object that serves as a `Positional` for all of the strings of the Serialization Contexts on which this bytecode depends.
+
 strings
 -------
 

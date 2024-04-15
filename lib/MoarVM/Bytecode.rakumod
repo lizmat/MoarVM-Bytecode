@@ -3,6 +3,30 @@
 use List::Agnostic:ver<0.0.1>:auth<zef:lizmat>;
 use paths:ver<10.0.9>:auth<zef:lizmat>;
 
+#- MoarVM::Bytecode::SC::Dependencies ------------------------------------------
+my class MoarVM::Bytecode::SC::Dependencies does List::Agnostic {
+    has        $!strings is built;
+    has uint32 @!indices is built;
+    has int    $.elems;
+
+    method new($M) {
+        my uint32 @indices;
+
+        my int $offset = $M.sc-dependencies-offset;
+        my int $elems  = $M.sc-dependencies-entries;
+        my int $last   = $offset + ($elems * 4);
+        while $offset < $last {
+            @indices.push: $M.uint32($offset);
+            $offset += 4;
+        }
+
+        self.bless(:strings($M.strings), :@indices, :$elems)
+    }
+
+    method AT-POS(Int:D $pos) { $!strings.AT-POS(@!indices[$pos]) }
+}
+
+#- MoarVM::Bytecode::Strings ---------------------------------------------------
 # Encapsulate the string heap as a Positional
 my class MoarVM::Bytecode::Strings does List::Agnostic {
     has        $!M       is built;
@@ -42,9 +66,11 @@ my class MoarVM::Bytecode::Strings does List::Agnostic {
     }
 }
 
+#- MoarVM::Bytecode ------------------------------------------------------------
 class MoarVM::Bytecode {
-    has Buf     $.bytecode;
-    has Strings $.strings  is built(False);
+    has Buf              $.bytecode;
+    has Strings          $.strings         is built(False);
+    has SC::Dependencies $.sc-dependencies is built(False);
 
     # Object setup
     multi method new(Str:D $path) {
@@ -66,7 +92,8 @@ class MoarVM::Bytecode {
         die Q|Unsupported bytecode version: expected 7 but got | ~ $version
           unless $version == 7;
 
-        $!strings := Strings.new(self);
+        $!strings         := Strings.new(self);
+        $!sc-dependencies := SC::Dependencies.new(self);
     }
 
     # Other basic accessors
@@ -239,6 +266,17 @@ say $M.hll-name;     # most likely "Raku"
 
 Returns the HLL language name for this bytecode.  Most likely "Raku", or
 "nqp".
+
+=head2 sc-dependencies
+
+=begin code :lang<raku>
+
+.say for $M.sc-dependencies;  # identifiers for Serialization Context
+
+=end code
+
+Returns an object that serves as a C<Positional> for all of the strings of
+the Serialization Contexts on which this bytecode depends.
 
 =head2 strings
 
