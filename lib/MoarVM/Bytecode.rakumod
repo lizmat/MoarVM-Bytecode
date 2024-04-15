@@ -120,7 +120,7 @@ class MoarVM::Bytecode {
         ).join("\n")
     }
 
-    method rootdir() { $*EXECUTABLE.parent(3) }
+    method rootdir() { $*VM.config<prefix>.IO.parent }
 
     method setting(str $version = "c") {
         my $root     = self.rootdir;
