@@ -3,7 +3,7 @@ use MoarVM::Bytecode;
 
 plan 4;
 
-.say for $M.files;
+.say for MoarVM::Bytecode.files;
 
 my $M := MoarVM::Bytecode.new("c");
 is $M.version,   7,     "Is it the correct version";
