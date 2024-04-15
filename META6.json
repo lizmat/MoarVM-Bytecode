@@ -7,7 +7,8 @@
   ],
   "depends": [
     "HexDump::Tiny:ver<0.6>:auth<zef:raku-community-modules>",
-    "List::Agnostic:ver<0.0.1>:auth<zef:lizmat>"
+    "List::Agnostic:ver<0.0.1>:auth<zef:lizmat>",
+    "paths:ver<10.0.9>:auth<zef:lizmat>"
   ],
   "description": "Provide introspection into MoarVM bytecode",
   "license": "Artistic-2.0",
@@ -24,5 +25,5 @@
   ],
   "test-depends": [
   ],
-  "version": "0.0.1"
+  "version": "0.0.2"
 }

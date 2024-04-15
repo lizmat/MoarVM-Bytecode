@@ -120,14 +120,20 @@ class MoarVM::Bytecode {
         ).join("\n")
     }
 
-    method blib() { $*EXECUTABLE.parent(3).add("blib") }
+    method rootdir() { $*EXECUTABLE.parent(3) }
+
     method setting(str $version = "c") {
-        my $setting = self.blib.add("CORE.$version.setting.moarvm");
+        my $root     = self.rootdir;
+        my $filename = "CORE.$version.setting.moarvm";
+        my $setting  = $root.add("blib/$filename");
         $setting.s
           ?? $setting
-          !! $*EXECUTABLE.parent(2).add(
-               "share/perl6/runtime/CORE.$version.setting.moarvm"
-             )
+          !! $root.add("install/share/perl6/runtime/$filename")
+    }
+
+    method files() {
+        use paths:ver<10.0.9>:auth<zef:lizmat>;
+        paths(self.rootdir, :file(*.ends-with(".moarvm"))).sort
     }
 }
 
@@ -177,15 +183,26 @@ Create an instance of the C<MoarVM::Bytecode> object from a letter (assumed
 to be a Raku version letter such as "c", "d" or "e"), a filename, an
 C<IO::Path> or a C<Buf>/C<Blob> object.
 
-=head2 blib
+=head2 files
 
 =begin code :lang<raku>
 
-my $blib = MoarVM::Bytecode.blib;
+.say for MoarVM::Bytecode.files;
 
 =end code
 
-Returns an C<IO::Path> of the "blib" directory of the installation of the
+Returns a sorted list of paths of MoarVM bytecode files that could be found
+in the installation of the currently running C<rakudo> executable.
+
+=head2 root
+
+=begin code :lang<raku>
+
+my $rootdir = MoarVM::Bytecode.rootdir;
+
+=end code
+
+Returns an C<IO::Path> of the root directory of the installation of the
 currently running C<rakudo> executable.
 
 =head2 setting
@@ -225,7 +242,7 @@ say $M.hll-name;     # most likely "Raku"
 =end code
 
 Returns the HLL language name for this bytecode.  Most likely "Raku", or
-"NQP".
+"nqp".
 
 =head2 strings
 

@@ -41,14 +41,23 @@ my $M = MoarVM::Bytecode.new($buf);          # a Buf object
 
 Create an instance of the `MoarVM::Bytecode` object from a letter (assumed to be a Raku version letter such as "c", "d" or "e"), a filename, an `IO::Path` or a `Buf`/`Blob` object.
 
-blib
+files
+-----
+
+```raku
+.say for MoarVM::Bytecode.files;
+```
+
+Returns a sorted list of paths of MoarVM bytecode files that could be found in the installation of the currently running `rakudo` executable.
+
+root
 ----
 
 ```raku
-my $blib = MoarVM::Bytecode.blib;
+my $rootdir = MoarVM::Bytecode.rootdir;
 ```
 
-Returns an `IO::Path` of the "blib" directory of the installation of the currently running `rakudo` executable.
+Returns an `IO::Path` of the root directory of the installation of the currently running `rakudo` executable.
 
 setting
 -------
@@ -82,7 +91,7 @@ hll-name
 say $M.hll-name;     # most likely "Raku"
 ```
 
-Returns the HLL language name for this bytecode. Most likely "Raku", or "NQP".
+Returns the HLL language name for this bytecode. Most likely "Raku", or "nqp".
 
 strings
 -------

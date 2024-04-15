@@ -1,10 +1,26 @@
 use Test;
 use MoarVM::Bytecode;
 
-plan 2;
+plan 4;
 
 my $M := MoarVM::Bytecode.new("c");
 is $M.version,   7,     "Is it the correct version";
 is $M.hll-name, "Raku", "Is it the correct HLL";
+
+my @files = $M.files;
+ok @files.elems, "did we find any bytecode files";
+
+subtest "Check all known bytecode files" => {
+    plan @files + 1;
+
+    my %hll-names;
+
+    for @files {
+        ok (my $m := MoarVM::Bytecode.new($_)), $_;
+        %hll-names{$m.hll-name}++;
+    }
+
+    is %hll-names.elems, 2, 'Did we see 2 HLL names';
+}
 
 # vim: expandtab shiftwidth=4
