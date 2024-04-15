@@ -1,9 +1,12 @@
 use Test;
 use MoarVM::Bytecode;
 
-plan 4;
+use paths;
+my $prefix = $*VM.config<prefix>;
+.say for paths $prefix;
+say "prefix = $prefix";
 
-.say for MoarVM::Bytecode.files;
+plan 4;
 
 my $M := MoarVM::Bytecode.new("c");
 is $M.version,   7,     "Is it the correct version";
