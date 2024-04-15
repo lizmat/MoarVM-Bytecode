@@ -1,6 +1,7 @@
 # An attempt at providing introspection into the MoarVM bytecode format
 
-use List::Agnostic;
+use List::Agnostic:ver<0.0.1>:auth<zef:lizmat>;
+use paths:ver<10.0.9>:auth<zef:lizmat>;
 
 # Encapsulate the string heap as a Positional
 my class MoarVM::Bytecode::Strings does List::Agnostic {
@@ -120,19 +121,14 @@ class MoarVM::Bytecode {
         ).join("\n")
     }
 
-    method rootdir() { $*VM.config<prefix>.IO.parent }
+    method rootdir() { $*EXECUTABLE.parent(3) }
 
     method setting(str $version = "c") {
-        my $root     = self.rootdir;
         my $filename = "CORE.$version.setting.moarvm";
-        my $setting  = $root.add("blib/$filename");
-        $setting.s
-          ?? $setting
-          !! $root.add("install/share/perl6/runtime/$filename")
+        paths(self.rootdir, :file(* eq $filename)).head
     }
 
     method files() {
-        use paths:ver<10.0.9>:auth<zef:lizmat>;
         paths(self.rootdir, :file(*.ends-with(".moarvm"))).sort
     }
 }

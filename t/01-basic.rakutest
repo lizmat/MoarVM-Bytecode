@@ -1,11 +1,6 @@
 use Test;
 use MoarVM::Bytecode;
 
-use paths;
-my $prefix = $*EXECUTABLE.parent(3);
-.say for paths $prefix;
-say "prefix = $prefix";
-
 plan 4;
 
 my $M := MoarVM::Bytecode.new("c");
