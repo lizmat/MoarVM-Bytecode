@@ -125,7 +125,7 @@ class MoarVM::Bytecode {
 
     method setting(str $version = "c") {
         my $filename = "CORE.$version.setting.moarvm";
-        paths(self.rootdir, :file(* eq $filename)).head
+        paths(self.rootdir, :file(* eq $filename)).sort.head
     }
 
     method files() {
