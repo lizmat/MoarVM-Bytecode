@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.4  2024-04-16T20:24:22+02:00
     - Simplify internal representation of "sc-dependencies"
     - Move documentation to separate file for convenience
     - Add level 7 bytecode documentation from MoarVM repo for reference

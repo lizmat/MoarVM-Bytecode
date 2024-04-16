@@ -275,11 +275,51 @@ A 32-bit unsigned integer index into
 Handler
 -------
 
+  * start-protected-region
+
+  * end-protected-region
+
+  * category-mask
+
+  * action
+
+  * register-with-block
+
+  * handler-goto
+
 Lexical
 -------
 
+  * name
+
+The name of this lexical, if any.
+
+  * type
+
+The type of this lexical.
+
+  * flags
+
+A 16-bit unsigned integer bitmap for this lexical.
+
+  * sc-dependency-index
+
+Index of into the `sc-dependencies` list.
+
+  * sc-object-index
+
+Index of into the `sc-dependencies` list.
+
 Local
 -----
+
+  * name
+
+The name of this local, if any.
+
+  * type
+
+The type of this local.
 
 AUTHOR
 ======
