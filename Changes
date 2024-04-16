@@ -2,9 +2,13 @@ Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
     - Simplify internal representation of "sc-dependencies"
-    - Add instance method "extension-ops", a list of ExtensionOp objects
     - Move documentation to separate file for convenience
     - Add level 7 bytecode documentation from MoarVM repo for reference
+    - Add "str" utility method
+    - Add ExtensionOp, Frame, Local and Lexical classes and a first
+      stab at documenting them
+    - Add instance method "extension-ops", a list of ExtensionOp objects
+    - Add instance method "frames" returning a Frame object for each frame
 
 0.0.3  2024-04-15T18:44:58+02:00
     - Add instance method "sc-dependencies" providing a Positional

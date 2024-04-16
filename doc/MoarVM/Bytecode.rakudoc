@@ -81,18 +81,14 @@ Assumes the currently lowest supported setting by default.
 
 =head1 INSTANCE METHODS
 
-=head2 hexdump
+=head2 extension-ops
 
 =begin code :lang<raku>
 
-say $M.hexdump($M.string-heap-offset);  # defaults to 256
-
-say $M.hexdump($M.string-heap-offset, 1024);
+Returns a list of NQP extension operators that have been added to this
+bytecode.  Each element consists of an L<ExtensionOp> object.
 
 =end code
-
-Returns a hexdump representation of the bytecode from the given byte offset
-for the given number of bytes (256 by default).
 
 =head2 hll-name
 
@@ -149,6 +145,19 @@ my $b = $M.bytecode;
 
 Returns the C<Buf> with the bytecode.
 
+=head2 hexdump
+
+=begin code :lang<raku>
+
+say $M.hexdump($M.string-heap-offset);  # defaults to 256
+
+say $M.hexdump($M.string-heap-offset, 1024);
+
+=end code
+
+Returns a hexdump representation of the bytecode from the given byte offset
+for the given number of bytes (256 by default).
+
 =head2 slice
 
 =begin code :lang<raku>
@@ -161,6 +170,16 @@ Returns a C<List> of unsigned 32-bit integers from the given offset and
 number of bytes.  Basically a shortcut for
 C<$M,bytecode[$offset ..^ $offset + $bytes]>.  The number of bytes defaults
 to C<256> if not specified.
+
+=head2 str
+
+=begin code :lang<raku>
+
+say $M.str(76);  # Raku or nqp
+
+=end code
+
+Returns the string of which the index is the given offset.
 
 =head2 subbuf
 
@@ -200,6 +219,137 @@ C<annotation-offset>,      C<annotation-length>,
 C<main-entry-frame-index>,
 C<library-load-frame-index>,
 C<deserialization-frame-index>
+
+=head1 SUBCLASSES
+
+=head2 ExtensionOp
+
+The C<ExtensionOp> class provides these methods:
+
+=item name
+
+The name with which the extension op can be called
+
+=item descriptor
+
+An 8-byte C<Buf> with descriptor information
+
+=head2 Frame
+
+The C<Frame> class provides these methods:
+
+=item annotation-entries
+
+A 32-bit unsigned integer offset for the number of annotations of
+this frame.
+
+=item annotation-offset
+
+A 32-bit unsigned integer offset in the annotations segment of the
+bytecode annotations of this frame.
+
+=item bytecode-length
+
+A 32-bit unsigned integer representing the number of bytes of
+bytecode of this frame.
+
+=item bytecode-offset
+
+A 32-bit unsigned integer offset in the bytecode segment of the
+bytecode of this frame.
+
+=item cuuid
+
+A string representing the compilation unit ID.
+
+=item flags
+
+A 16-bit unsigned integer bitmap with flags of this frame.
+
+=item handlers
+
+A list of L<Handler|#Handler> objects, representing the handlers in this frame.
+
+=item has-exit-handler
+
+1 if this frame has an exit handler, otherwise 0.
+
+=item index
+
+A 16-bit unsigned integer indicating the frame index of this frame.
+
+=item is-thunk
+
+1 if this frame is a thunk (as opposed to a real scope), otherwise 0.
+
+=item lexicals
+
+A list of L<Lexical|#Lexical> objects, representing the lexicals in this frame.
+
+=item locals
+
+A list of L<Local|#Local> objects, representing the locals in this frame.
+
+=item name
+
+The name of this frame, if any.
+
+=item no-outer
+
+1 if this frame has no outer, otherwise 0.
+
+=item outer-index
+
+A 16-bit unsigned integer indicating the frame index of the outer frame.
+
+=item sc-dependency-index
+
+A 32-bit unsigned integer index into
+
+=item sc-object-index
+
+A 32-bit unsigned integer index into
+
+=head2 Handler
+
+=item start-protected-region
+=item end-protected-region
+=item category-mask
+=item action
+=item register-with-block
+=item handler-goto
+
+=head2 Lexical
+
+=item name
+
+The name of this lexical, if any.
+
+=item type
+
+The type of this lexical.
+
+=item flags
+
+A 16-bit unsigned integer bitmap for this lexical.
+
+=item sc-dependency-index
+
+Index of into the C<sc-dependencies> list.
+
+=item sc-object-index
+
+Index of into the C<sc-dependencies> list.
+
+=head2 Local
+
+=item name
+
+The name of this local, if any.
+
+=item type
+
+The type of this local.
 
 =head1 AUTHOR
 

@@ -73,16 +73,13 @@ Returns an `IO::Path` of the bytecode file of the given setting letter. Assumes 
 INSTANCE METHODS
 ================
 
-hexdump
--------
+extension-ops
+-------------
 
 ```raku
-say $M.hexdump($M.string-heap-offset);  # defaults to 256
-
-say $M.hexdump($M.string-heap-offset, 1024);
+Returns a list of NQP extension operators that have been added to this
+bytecode.  Each element consists of an L<ExtensionOp> object.
 ```
-
-Returns a hexdump representation of the bytecode from the given byte offset for the given number of bytes (256 by default).
 
 hll-name
 --------
@@ -132,6 +129,17 @@ my $b = $M.bytecode;
 
 Returns the `Buf` with the bytecode.
 
+hexdump
+-------
+
+```raku
+say $M.hexdump($M.string-heap-offset);  # defaults to 256
+
+say $M.hexdump($M.string-heap-offset, 1024);
+```
+
+Returns a hexdump representation of the bytecode from the given byte offset for the given number of bytes (256 by default).
+
 slice
 -----
 
@@ -140,6 +148,15 @@ dd $M.slice(0, 8).chrs;     # "MOARVM\r\n"
 ```
 
 Returns a `List` of unsigned 32-bit integers from the given offset and number of bytes. Basically a shortcut for `$M,bytecode[$offset ..^ $offset + $bytes]`. The number of bytes defaults to `256` if not specified.
+
+str
+---
+
+```raku
+say $M.str(76);  # Raku or nqp
+```
+
+Returns the string of which the index is the given offset.
 
 subbuf
 ------
@@ -165,6 +182,104 @@ HEADER SHORTCUTS
 The following methods provide shortcuts to the values in the bytecode header. They are explained in the [MoarVM documentation](https://github.com/MoarVM/MoarVM/blob/main/docs/bytecode.markdown#bytecode).
 
 `sc-dependencies-offset`, `sc-dependencies-entries`, `extension-ops-offset`, `extension-ops-entries`, `frames-data-offset`, `frames-data-entries`, `callsites-data-offset`, `callsites-data-entries`, `string-heap-offset`, `string-heap-entries`, `sc-data-offset`, `sc-data-length`, `bytecode-offset`, `bytecode-length`, `annotation-offset`, `annotation-length`, `main-entry-frame-index`, `library-load-frame-index`, `deserialization-frame-index`
+
+SUBCLASSES
+==========
+
+ExtensionOp
+-----------
+
+The `ExtensionOp` class provides these methods:
+
+  * name
+
+The name with which the extension op can be called
+
+  * descriptor
+
+An 8-byte `Buf` with descriptor information
+
+Frame
+-----
+
+The `Frame` class provides these methods:
+
+  * annotation-entries
+
+A 32-bit unsigned integer offset for the number of annotations of this frame.
+
+  * annotation-offset
+
+A 32-bit unsigned integer offset in the annotations segment of the bytecode annotations of this frame.
+
+  * bytecode-length
+
+A 32-bit unsigned integer representing the number of bytes of bytecode of this frame.
+
+  * bytecode-offset
+
+A 32-bit unsigned integer offset in the bytecode segment of the bytecode of this frame.
+
+  * cuuid
+
+A string representing the compilation unit ID.
+
+  * flags
+
+A 16-bit unsigned integer bitmap with flags of this frame.
+
+  * handlers
+
+A list of [Handler](#Handler) objects, representing the handlers in this frame.
+
+  * has-exit-handler
+
+1 if this frame has an exit handler, otherwise 0.
+
+  * index
+
+A 16-bit unsigned integer indicating the frame index of this frame.
+
+  * is-thunk
+
+1 if this frame is a thunk (as opposed to a real scope), otherwise 0.
+
+  * lexicals
+
+A list of [Lexical](#Lexical) objects, representing the lexicals in this frame.
+
+  * locals
+
+A list of [Local](#Local) objects, representing the locals in this frame.
+
+  * name
+
+The name of this frame, if any.
+
+  * no-outer
+
+1 if this frame has no outer, otherwise 0.
+
+  * outer-index
+
+A 16-bit unsigned integer indicating the frame index of the outer frame.
+
+  * sc-dependency-index
+
+A 32-bit unsigned integer index into
+
+  * sc-object-index
+
+A 32-bit unsigned integer index into
+
+Handler
+-------
+
+Lexical
+-------
+
+Local
+-----
 
 AUTHOR
 ======

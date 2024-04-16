@@ -21,9 +21,9 @@
   ],
   "source-url": "https://github.com/lizmat/MoarVM-Bytecode.git",
   "tags": [
-    "MOARVM"
+    "MOARVM", "UTIL"
   ],
   "test-depends": [
   ],
-  "version": "0.0.3"
+  "version": "0.0.4"
 }

@@ -17,22 +17,24 @@ my class MoarVM::Bytecode::ExtensionOp {
 
 #- MoarVM::Bytecode::Frame -----------------------------------------------------
 my class MoarVM::Bytecode::Frame {
-    has uint32 $!offset;
-    has str    $.compilation-unit;
-    has str    $.name;
+    has uint32 $.index;
     has uint32 $.bytecode-offset;
     has uint32 $.bytecode-length;
+    has str    $.cuuid;
+    has str    $.name;
     has uint16 $.outer-index;
-    has uint32 $.annnotation-offset;
-    has uint32 $.annnotation-entries;
-    has uint32 $.handler-entries;
-    has uint16 $.frame-flags;
-    has uint16 $.static-lexical-values-entries;
+    has uint32 $.annotation-offset;
+    has uint32 $.annotation-entries;
+    has uint16 $.flags;
     has uint32 $.sc-dependency-index;
     has uint32 $.sc-object-index;
-    has uint32 $.debug-name-entries;
     has        @.locals;
     has        @.lexicals;
+    has        @.handlers;
+
+    method no-outer()         { $!outer-index == $!index }
+    method has-exit-handler() { $!flags +& 1             }
+    method is-thunk()         { $!flags +& 2 && 1        }
 }
 
 #- MoarVM::Bytecode::Handler --------------------------------------------
@@ -43,6 +45,22 @@ my class MoarVM::Bytecode::Handler {
     has uint16 $.action;
     has uint16 $.register-with-block;
     has uint32 $.handler-goto;
+    has uint16 $.extra;
+}
+
+#- MoarVM::Bytecode::Local -----------------------------------------------------
+my class MoarVM::Bytecode::Local {
+    has str    $.name;
+    has str    $.type;
+}
+
+#- MoarVM::Bytecode::Lexical ---------------------------------------------------
+my class MoarVM::Bytecode::Lexical {
+    has str    $.name;
+    has str    $.type;
+    has uint16 $.flags;
+    has uint32 $.sc-dependency-index;
+    has uint32 $.sc-object-index;
 }
 
 #- MoarVM::Bytecode::Strings ---------------------------------------------------
@@ -91,6 +109,7 @@ class MoarVM::Bytecode {
     has Strings $.strings         is built(False);
     has         @.sc-dependencies is built(False);
     has         @.extension-ops   is built(False);
+    has         @.frames          is built(False);
 
     # Object setup
     multi method new(Str:D $path) {
@@ -114,35 +133,145 @@ class MoarVM::Bytecode {
         die Q|Unsupported bytecode version: expected 7 but got | ~ $version
           unless $version == 7;
 
-        my $strings := Strings.new(self);
+        $!strings         := Strings.new(self);
+        @!sc-dependencies := self!make-sc-dependencies;
+        @!extension-ops   := self!make-extension-ops;
+        @!frames          := self!make-frames;
+    }
 
+    # Helper methods for creating object, mostly for readability
+    method !make-sc-dependencies() {
+        my $strings         := $!strings;
         my $sc-dependencies := IterationBuffer.new;
-        my int $offset = self.sc-dependencies-offset;
-        my int $last   = $offset + (self.sc-dependencies-entries * 4);
+
+        my uint $offset = self.sc-dependencies-offset;
+        my uint $last   = $offset + (self.sc-dependencies-entries * 4);
         while $offset < $last {
             $sc-dependencies.push: $strings[self.uint32($offset)];
-            $offset += 4;
+            $offset = $offset + 4;
         }
+        $sc-dependencies.List
+    }
 
+    method !make-extension-ops() {
+        my $bytecode      := $!bytecode;
+        my $strings       := $!strings;
         my $extension-ops := IterationBuffer.new;
-        $offset = self.extension-ops-offset;
-        $last   = $offset + (self.extension-ops-entries * 12);
+
+        my $offset = self.extension-ops-offset;
+        my $last   = $offset + (self.extension-ops-entries * 12);
         while $offset < $last {
             $extension-ops.push: ExtensionOp.new(
               :name($strings[self.uint32($offset)]),
               :descriptor($bytecode.subbuf($offset + 4, 8))
             );
-            $offset += 12;
+            $offset = $offset + 12;
+        }
+        $extension-ops.List
+    }
+
+    method !make-frames() {
+        my $frames := IterationBuffer.new;
+
+        my $offset = self.frames-data-offset;
+        for ^self.frames-data-entries {
+            $frames.push(self!make-frame-at($offset, $_));
+        }
+        $frames.List
+    }
+
+    method !make-frame-at(\current, $index) {
+        my int $offset = current;
+        my $bc        := $!bytecode;
+        my $st        := $!strings;
+        my constant LE = LittleEndian;
+
+        my $bytecode-offset           :=     $bc.read-uint32($offset,      LE);
+        my $bytecode-length           :=     $bc.read-uint32($offset +  4, LE);
+        my $num-locals                :=     $bc.read-uint32($offset +  8, LE);
+        my $num-lexicals              :=     $bc.read-uint32($offset + 12, LE);
+        my $cuuid                     := $st[$bc.read-uint32($offset + 16, LE)];
+        my $name                      := $st[$bc.read-uint32($offset + 20, LE)];
+        my $outer-index               :=     $bc.read-uint16($offset + 24, LE);
+        my $annotation-offset         :=     $bc.read-uint32($offset + 26, LE);
+        my $annotation-entries        :=     $bc.read-uint32($offset + 30, LE);
+        my $num-handlers              :=     $bc.read-uint32($offset + 34, LE);
+        my $flags                     :=     $bc.read-uint16($offset + 38, LE);
+        my $num-static-lexical-values :=     $bc.read-uint16($offset + 40, LE);
+        my $sc-dependency-index       :=     $bc.read-uint32($offset + 42, LE);
+        my $sc-object-index           :=     $bc.read-uint32($offset + 46, LE);
+        my $num-debug-names           :=     $bc.read-uint32($offset + 50, LE);
+        $offset = $offset + 54;
+
+        my @locals;
+        for ^$num-locals {
+            @locals.push: {
+              :type(@localtype[$bc.read-uint16($offset, LE)])
+            };
+            $offset = $offset + 2;
         }
 
-        $!strings         := $strings;
-        @!sc-dependencies := $sc-dependencies.List;
-        @!extension-ops   := $extension-ops.List;
+        my @lexicals;
+        for ^$num-lexicals {
+            @lexicals.push: {
+              :type(@localtype[$bc.read-uint16($offset,     LE)]),
+              :name($st[       $bc.read-uint32($offset + 2, LE)]),
+            };
+            $offset = $offset + 6;
+        }
+
+        my @handlers;
+        for ^$num-handlers {
+            my $start-protected-region := $bc.read-uint32($offset,      LE);
+            my $end-protected-region   := $bc.read-uint32($offset +  4, LE);
+            my $category-mask          := $bc.read-uint32($offset +  8, LE);
+            my $action                 := $bc.read-uint16($offset + 12, LE);
+            my $register-with-block    := $bc.read-uint16($offset + 14, LE);
+            my $handler-goto           := $bc.read-uint32($offset + 16, LE);
+            $offset = $offset + 20;
+
+            my $extra := 0;
+            if $category-mask +& 4096 {
+                $extra := $bc.read-uint16($offset, LE);
+                $offset = $offset + 2;
+            }
+
+            @handlers.push: Handler.new(
+              :$start-protected-region, :$end-protected-region, :$category-mask,
+              :$action, :$register-with-block, :$handler-goto, :$extra
+            );
+        }
+
+        for ^$num-static-lexical-values {
+            my %lexical := @lexicals[$bc.read-uint16($offset, LE)];
+            %lexical<flags>               := $bc.read-uint16($offset + 2, LE);
+            %lexical<sc-dependency-index> := $bc.read-uint32($offset + 4, LE);
+            %lexical<sc-object-index>     := $bc.read-uint32($offset + 8, LE);
+            $offset = $offset + 12;
+        }
+
+        for ^$num-debug-names {
+            my %local := @locals[$bc.read-uint16($offset,     LE)];
+            %local<name> :=  $st[$bc.read-uint32($offset + 2, LE)];
+            $offset = $offset + 6;
+        }
+
+        @locals   .= map({Local.new(|$_)});
+        @lexicals .= map({Lexical.new(|$_)});
+
+        current = $offset;
+        Frame.new(
+          :$index, :$bytecode-offset, :$bytecode-length, :$num-locals,
+          :$num-lexicals, :$cuuid, :$name, :$outer-index,
+          :$annotation-offset, :$annotation-entries, :$num-handlers,
+          :$flags, :$sc-dependency-index, :$sc-object-index,
+          :@locals, :@lexicals, :@handlers
+        )
     }
 
     # Other basic accessors
-    method version()  {           self.uint32( 8)  }
-    method hll-name() { $!strings[self.uint32(76)] }
+    method version()  { self.uint32(8) }
+    method hll-name() { self.str(76)   }
 
     method sc-dependencies-offset()  { self.uint32(12) }
     method sc-dependencies-entries() { self.uint32(16) }
@@ -166,8 +295,17 @@ class MoarVM::Bytecode {
     method deserialization-frame-index() { self.uint32(88) }
 
     # Utility methods
-    method uint16(int $offset) { $!bytecode.read-uint16($offset, LittleEndian) }
-    method uint32(int $offset) { $!bytecode.read-uint32($offset, LittleEndian) }
+    method uint16(int $offset) {
+        $!bytecode.read-uint16($offset, LittleEndian)
+    }
+
+    method uint32(int $offset) {
+        $!bytecode.read-uint32($offset, LittleEndian)
+    }
+
+    method str(int $offset) {
+        $!strings[$!bytecode.read-uint32($offset, LittleEndian)]
+    }
 
     method slice(int $offset, int $bytes = 256) {
         $!bytecode[$offset ..^ $offset + $bytes]
