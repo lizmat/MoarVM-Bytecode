@@ -1,17 +1,12 @@
 use Test;
 use MoarVM::Bytecode;
 
-plan 6;
+plan 7;
 
 my str $setting = "c";
 my $M := MoarVM::Bytecode.new($setting);
 is $M.version,   7,     "Is it the correct version";
 is $M.hll-name, "Raku", "Is it the correct HLL";
-
-is $M.strings.elems, $M.string-heap-entries,
-  "Found $M.strings.elems() strings in $setting setting";
-is $M.sc-dependencies.elems, $M.sc-dependencies-entries,
-  "Found $M.sc-dependencies.elems() strings in $setting setting";
 
 my @files = $M.files;
 ok @files.elems, "did we find any bytecode files";
@@ -28,5 +23,12 @@ subtest "Check all known bytecode files" => {
 
     is %hll-names.elems, 2, 'Did we see 2 HLL names';
 }
+
+is $M.strings.elems, $M.string-heap-entries,
+  "Found $M.strings.elems() strings in $setting setting";
+is $M.sc-dependencies.elems, $M.sc-dependencies-entries,
+  "Found $M.sc-dependencies.elems() sc dependencies in $setting setting";
+is $M.extension-ops.elems, $M.extension-ops-entries,
+  "Found $M.extension-ops.elems() extension ops in $setting setting";
 
 # vim: expandtab shiftwidth=4

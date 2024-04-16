@@ -1,0 +1,223 @@
+=begin pod
+
+=head1 NAME
+
+MoarVM::Bytecode - Provide introspection into MoarVM bytecode
+
+=head1 SYNOPSIS
+
+=begin code :lang<raku>
+
+use MoarVM::Bytecode;
+
+my $M = MoarVM::Bytecode.new($filename);  # or letter or IO or Blob
+
+say $M.hll-name;     # most likely "Raku"
+
+say $M.strings[99];  # the 100th string on the string heap
+
+=end code
+
+=head1 DESCRIPTION
+
+MoarVM::Bytecode provides an object oriented interface to the MoarVM
+bytecode format, based on the information provided in
+L<docs/bytecode.markdown|https://github.com/MoarVM/MoarVM/blob/main/docs/bytecode.markdown#bytecode>.
+
+=head1 CLASS METHODS
+
+=head2 new
+
+=begin code :lang<raku>
+
+my $M = MoarVM::Bytecode.new("c");           # the 6.c setting
+
+my $M = MoarVM::Bytecode.new("foo/bar");     # file as string
+
+my $M = MoarVM::Bytecode.new($filename.IO);  # path as IO object
+
+my $M = MoarVM::Bytecode.new($buf);          # a Buf object
+
+=end code
+
+Create an instance of the C<MoarVM::Bytecode> object from a letter (assumed
+to be a Raku version letter such as "c", "d" or "e"), a filename, an
+C<IO::Path> or a C<Buf>/C<Blob> object.
+
+=head2 files
+
+=begin code :lang<raku>
+
+.say for MoarVM::Bytecode.files;
+
+=end code
+
+Returns a sorted list of paths of MoarVM bytecode files that could be found
+in the installation of the currently running C<rakudo> executable.
+
+=head2 root
+
+=begin code :lang<raku>
+
+my $rootdir = MoarVM::Bytecode.rootdir;
+
+=end code
+
+Returns an C<IO::Path> of the root directory of the installation of the
+currently running C<rakudo> executable.
+
+=head2 setting
+
+=begin code :lang<raku>
+
+my $setting = MoarVM::Bytecode.setting;
+
+my $setting = MoarVM::Bytecode.setting("d");
+
+=end code
+
+Returns an C<IO::Path> of the bytecode file of the given setting letter.
+Assumes the currently lowest supported setting by default.
+
+=head1 INSTANCE METHODS
+
+=head2 hexdump
+
+=begin code :lang<raku>
+
+say $M.hexdump($M.string-heap-offset);  # defaults to 256
+
+say $M.hexdump($M.string-heap-offset, 1024);
+
+=end code
+
+Returns a hexdump representation of the bytecode from the given byte offset
+for the given number of bytes (256 by default).
+
+=head2 hll-name
+
+=begin code :lang<raku>
+
+say $M.hll-name;     # most likely "Raku"
+
+=end code
+
+Returns the HLL language name for this bytecode.  Most likely "Raku", or
+"nqp".
+
+=head2 sc-dependencies
+
+=begin code :lang<raku>
+
+.say for $M.sc-dependencies;  # identifiers for Serialization Context
+
+=end code
+
+Returns an object that serves as a C<Positional> for all of the strings of
+the Serialization Contexts on which this bytecode depends.
+
+=head2 strings
+
+=begin code :lang<raku>
+
+.say for $M.strings[^10];  # The first 10 strings on the string heap
+
+=end code
+
+Returns an object that serves as a C<Positional> for all of the strings on
+the string heap.
+
+=head2 version
+
+=begin code :lang<raku>
+
+say $M.version;     # most likely 7
+
+=end code
+
+Returns the numeric version of this bytecode.  Most likely "7".
+
+=head1 PRIMITIVES
+
+=head2 bytecode
+
+=begin code :lang<raku>
+
+my $b = $M.bytecode;
+
+=end code
+
+Returns the C<Buf> with the bytecode.
+
+=head2 slice
+
+=begin code :lang<raku>
+
+dd $M.slice(0, 8).chrs;     # "MOARVM\r\n"
+
+=end code
+
+Returns a C<List> of unsigned 32-bit integers from the given offset and
+number of bytes.  Basically a shortcut for
+C<$M,bytecode[$offset ..^ $offset + $bytes]>.  The number of bytes defaults
+to C<256> if not specified.
+
+=head2 subbuf
+
+=begin code :lang<raku>
+
+dd $M.subbuf(0, 8).decode;  # "MOARVM\r\n"
+
+=end code
+
+Calls C<subbuf> on the C<bytecode> and returns the result.  Basically a
+shortcut for C<$M.bytecode.subbuf(...)>.
+
+=head2 uint32
+
+=begin code :lang<raku>
+
+my $i = $M.uint32($M.string-heap-offset);
+
+=end code
+
+Returns the unsigned 32-bit integer value at the given offset in the bytecode.
+
+=head1 HEADER SHORTCUTS
+
+The following methods provide shortcuts to the values in the bytecode header.
+They are explained in the
+L<MoarVM documentation|https://github.com/MoarVM/MoarVM/blob/main/docs/bytecode.markdown#bytecode>.
+
+C<sc-dependencies-offset>, C<sc-dependencies-entries>,
+C<extension-ops-offset>,   C<extension-ops-entries>,
+C<frames-data-offset>,     C<frames-data-entries>,
+C<callsites-data-offset>,  C<callsites-data-entries>,
+C<string-heap-offset>,     C<string-heap-entries>,
+C<sc-data-offset>,         C<sc-data-length>,
+C<bytecode-offset>,        C<bytecode-length>,
+C<annotation-offset>,      C<annotation-length>,
+C<main-entry-frame-index>,
+C<library-load-frame-index>,
+C<deserialization-frame-index>
+
+=head1 AUTHOR
+
+Elizabeth Mattijsen <liz@raku.rocks>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2024 Elizabeth Mattijsen
+
+Source can be located at: https://github.com/lizmat/MoarVM-Bytecode .
+Comments and Pull Requests are welcome.
+
+If you like this module, or what I’m doing more generally, committing to a
+L<small sponsorship|https://github.com/sponsors/lizmat/>  would mean a great
+deal to me!
+
+This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
+
+=end pod
+
+# vim: expandtab shiftwidth=4

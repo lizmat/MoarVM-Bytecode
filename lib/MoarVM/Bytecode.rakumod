@@ -3,27 +3,46 @@
 use List::Agnostic:ver<0.0.1>:auth<zef:lizmat>;
 use paths:ver<10.0.9>:auth<zef:lizmat>;
 
-#- MoarVM::Bytecode::SC::Dependencies ------------------------------------------
-my class MoarVM::Bytecode::SC::Dependencies does List::Agnostic {
-    has        $!strings is built;
-    has uint32 @!indices is built;
-    has int    $.elems;
+my constant @localtype = <
+  0      int8 int16 int32 int64 num32 num64 str    obj    9
+  10     11   12    13    14    15    16    uint8  uint16 uint32
+  uint64
+>;
 
-    method new($M) {
-        my uint32 @indices;
+#- MoarVM::Bytecode::ExtensionOp -----------------------------------------------
+my class MoarVM::Bytecode::ExtensionOp {
+    has str $.name;
+    has Buf $.descriptor;
+}
 
-        my int $offset = $M.sc-dependencies-offset;
-        my int $elems  = $M.sc-dependencies-entries;
-        my int $last   = $offset + ($elems * 4);
-        while $offset < $last {
-            @indices.push: $M.uint32($offset);
-            $offset += 4;
-        }
+#- MoarVM::Bytecode::Frame -----------------------------------------------------
+my class MoarVM::Bytecode::Frame {
+    has uint32 $!offset;
+    has str    $.compilation-unit;
+    has str    $.name;
+    has uint32 $.bytecode-offset;
+    has uint32 $.bytecode-length;
+    has uint16 $.outer-index;
+    has uint32 $.annnotation-offset;
+    has uint32 $.annnotation-entries;
+    has uint32 $.handler-entries;
+    has uint16 $.frame-flags;
+    has uint16 $.static-lexical-values-entries;
+    has uint32 $.sc-dependency-index;
+    has uint32 $.sc-object-index;
+    has uint32 $.debug-name-entries;
+    has        @.locals;
+    has        @.lexicals;
+}
 
-        self.bless(:strings($M.strings), :@indices, :$elems)
-    }
-
-    method AT-POS(Int:D $pos) { $!strings.AT-POS(@!indices[$pos]) }
+#- MoarVM::Bytecode::Handler --------------------------------------------
+my class MoarVM::Bytecode::Handler {
+    has uint32 $.start-protected-region;
+    has uint32 $.end-protected-region;
+    has uint32 $.category-mask;
+    has uint16 $.action;
+    has uint16 $.register-with-block;
+    has uint32 $.handler-goto;
 }
 
 #- MoarVM::Bytecode::Strings ---------------------------------------------------
@@ -68,9 +87,10 @@ my class MoarVM::Bytecode::Strings does List::Agnostic {
 
 #- MoarVM::Bytecode ------------------------------------------------------------
 class MoarVM::Bytecode {
-    has Buf              $.bytecode;
-    has Strings          $.strings         is built(False);
-    has SC::Dependencies $.sc-dependencies is built(False);
+    has Buf     $.bytecode;
+    has Strings $.strings         is built(False);
+    has         @.sc-dependencies is built(False);
+    has         @.extension-ops   is built(False);
 
     # Object setup
     multi method new(Str:D $path) {
@@ -84,7 +104,9 @@ class MoarVM::Bytecode {
     }
 
     method TWEAK() {
-        my $magic := $!bytecode[^8].chrs;
+        my $bytecode := $!bytecode;
+
+        my $magic := $bytecode[^8].chrs;
         die Q|Unsupported magic string: expected "MOARVM\r\n" but got | ~ $magic
           unless $magic eq "MOARVM\r\n";
 
@@ -92,8 +114,30 @@ class MoarVM::Bytecode {
         die Q|Unsupported bytecode version: expected 7 but got | ~ $version
           unless $version == 7;
 
-        $!strings         := Strings.new(self);
-        $!sc-dependencies := SC::Dependencies.new(self);
+        my $strings := Strings.new(self);
+
+        my $sc-dependencies := IterationBuffer.new;
+        my int $offset = self.sc-dependencies-offset;
+        my int $last   = $offset + (self.sc-dependencies-entries * 4);
+        while $offset < $last {
+            $sc-dependencies.push: $strings[self.uint32($offset)];
+            $offset += 4;
+        }
+
+        my $extension-ops := IterationBuffer.new;
+        $offset = self.extension-ops-offset;
+        $last   = $offset + (self.extension-ops-entries * 12);
+        while $offset < $last {
+            $extension-ops.push: ExtensionOp.new(
+              :name($strings[self.uint32($offset)]),
+              :descriptor($bytecode.subbuf($offset + 4, 8))
+            );
+            $offset += 12;
+        }
+
+        $!strings         := $strings;
+        @!sc-dependencies := $sc-dependencies.List;
+        @!extension-ops   := $extension-ops.List;
     }
 
     # Other basic accessors
@@ -122,9 +166,8 @@ class MoarVM::Bytecode {
     method deserialization-frame-index() { self.uint32(88) }
 
     # Utility methods
-    method uint32(int $offset) {
-        $!bytecode.read-uint32($offset, LittleEndian)
-    }
+    method uint16(int $offset) { $!bytecode.read-uint16($offset, LittleEndian) }
+    method uint32(int $offset) { $!bytecode.read-uint32($offset, LittleEndian) }
 
     method slice(int $offset, int $bytes = 256) {
         $!bytecode[$offset ..^ $offset + $bytes]
@@ -159,227 +202,5 @@ class MoarVM::Bytecode {
         paths(self.rootdir, :file(*.ends-with(".moarvm"))).sort
     }
 }
-
-=begin pod
-
-=head1 NAME
-
-MoarVM::Bytecode - Provide introspection into MoarVM bytecode
-
-=head1 SYNOPSIS
-
-=begin code :lang<raku>
-
-use MoarVM::Bytecode;
-
-my $M = MoarVM::Bytecode.new($filename);  # or letter or IO or Blob
-
-say $M.hll-name;     # most likely "Raku"
-
-say $M.strings[99];  # the 100th string on the string heap
-
-=end code
-
-=head1 DESCRIPTION
-
-MoarVM::Bytecode provides an object oriented interface to the MoarVM
-bytecode format, based on the information provided in
-L<docs/bytecode.markdown|https://github.com/MoarVM/MoarVM/blob/main/docs/bytecode.markdown#bytecode>.
-
-=head1 CLASS METHODS
-
-=head2 new
-
-=begin code :lang<raku>
-
-my $M = MoarVM::Bytecode.new("c");           # the 6.c setting
-
-my $M = MoarVM::Bytecode.new("foo/bar");     # file as string
-
-my $M = MoarVM::Bytecode.new($filename.IO);  # path as IO object
-
-my $M = MoarVM::Bytecode.new($buf);          # a Buf object
-
-=end code
-
-Create an instance of the C<MoarVM::Bytecode> object from a letter (assumed
-to be a Raku version letter such as "c", "d" or "e"), a filename, an
-C<IO::Path> or a C<Buf>/C<Blob> object.
-
-=head2 files
-
-=begin code :lang<raku>
-
-.say for MoarVM::Bytecode.files;
-
-=end code
-
-Returns a sorted list of paths of MoarVM bytecode files that could be found
-in the installation of the currently running C<rakudo> executable.
-
-=head2 root
-
-=begin code :lang<raku>
-
-my $rootdir = MoarVM::Bytecode.rootdir;
-
-=end code
-
-Returns an C<IO::Path> of the root directory of the installation of the
-currently running C<rakudo> executable.
-
-=head2 setting
-
-=begin code :lang<raku>
-
-my $setting = MoarVM::Bytecode.setting;
-
-my $setting = MoarVM::Bytecode.setting("d");
-
-=end code
-
-Returns an C<IO::Path> of the bytecode file of the given setting letter.
-Assumes the currently lowest supported setting by default.
-
-=head1 INSTANCE METHODS
-
-=head2 hexdump
-
-=begin code :lang<raku>
-
-say $M.hexdump($M.string-heap-offset);  # defaults to 256
-
-say $M.hexdump($M.string-heap-offset, 1024);
-
-=end code
-
-Returns a hexdump representation of the bytecode from the given byte offset
-for the given number of bytes (256 by default).
-
-=head2 hll-name
-
-=begin code :lang<raku>
-
-say $M.hll-name;     # most likely "Raku"
-
-=end code
-
-Returns the HLL language name for this bytecode.  Most likely "Raku", or
-"nqp".
-
-=head2 sc-dependencies
-
-=begin code :lang<raku>
-
-.say for $M.sc-dependencies;  # identifiers for Serialization Context
-
-=end code
-
-Returns an object that serves as a C<Positional> for all of the strings of
-the Serialization Contexts on which this bytecode depends.
-
-=head2 strings
-
-=begin code :lang<raku>
-
-.say for $M.strings[^10];  # The first 10 strings on the string heap
-
-=end code
-
-Returns an object that serves as a C<Positional> for all of the strings on
-the string heap.
-
-=head2 version
-
-=begin code :lang<raku>
-
-say $M.version;     # most likely 7
-
-=end code
-
-Returns the numeric version of this bytecode.  Most likely "7".
-
-=head1 PRIMITIVES
-
-=head2 bytecode
-
-=begin code :lang<raku>
-
-my $b = $M.bytecode;
-
-=end code
-
-Returns the C<Buf> with the bytecode.
-
-=head2 slice
-
-=begin code :lang<raku>
-
-dd $M.slice(0, 8).chrs;     # "MOARVM\r\n"
-
-=end code
-
-Returns a C<List> of unsigned 32-bit integers from the given offset and
-number of bytes.  Basically a shortcut for
-C<$M,bytecode[$offset ..^ $offset + $bytes]>.  The number of bytes defaults
-to C<256> if not specified.
-
-=head2 subbuf
-
-=begin code :lang<raku>
-
-dd $M.subbuf(0, 8).decode;  # "MOARVM\r\n"
-
-=end code
-
-Calls C<subbuf> on the C<bytecode> and returns the result.  Basically a
-shortcut for C<$M.bytecode.subbuf(...)>.
-
-=head2 uint32
-
-=begin code :lang<raku>
-
-my $i = $M.uint32($M.string-heap-offset);
-
-=end code
-
-Returns the unsigned 32-bit integer value at the given offset in the bytecode.
-
-=head1 HEADER SHORTCUTS
-
-The following methods provide shortcuts to the values in the bytecode header.
-They are explained in the
-L<MoarVM documentation|https://github.com/MoarVM/MoarVM/blob/main/docs/bytecode.markdown#bytecode>.
-
-C<sc-dependencies-offset>, C<sc-dependencies-entries>,
-C<extension-ops-offset>,   C<extension-ops-entries>,
-C<frames-data-offset>,     C<frames-data-entries>,
-C<callsites-data-offset>,  C<callsites-data-entries>,
-C<string-heap-offset>,     C<string-heap-entries>,
-C<sc-data-offset>,         C<sc-data-length>,
-C<bytecode-offset>,        C<bytecode-length>,
-C<annotation-offset>,      C<annotation-length>,
-C<main-entry-frame-index>,
-C<library-load-frame-index>,
-C<deserialization-frame-index>
-
-=head1 AUTHOR
-
-Elizabeth Mattijsen <liz@raku.rocks>
-
-=head1 COPYRIGHT AND LICENSE
-
-Copyright 2024 Elizabeth Mattijsen
-
-Source can be located at: https://github.com/lizmat/MoarVM-Bytecode .
-Comments and Pull Requests are welcome.
-
-If you like this module, or what I’m doing more generally, committing to a
-L<small sponsorship|https://github.com/sponsors/lizmat/>  would mean a great
-deal to me!
-
-This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
-
-=end pod
 
 # vim: expandtab shiftwidth=4
