@@ -81,6 +81,19 @@ Returns a list of NQP extension operators that have been added to this
 bytecode.  Each element consists of an L<ExtensionOp> object.
 ```
 
+frames
+------
+
+```raku
+.say for $M.frames[^10];  # The first 10 frames on the frame heap
+
+my @frames := $M.frames.reify-all;
+```
+
+Returns a [Frames](Frames) object that serves as a `Positional` for all of the frames on the frame heap. Since the reification of a [Frame](#Frame) object is rather expensive, this is done lazily on each access.
+
+To reify all `Frame` objects at once, one can call the `reify-all` method, which also returns a list of the reified `Frame` objects.
+
 hll-name
 --------
 
@@ -97,7 +110,7 @@ sc-dependencies
 .say for $M.sc-dependencies;  # identifiers for Serialization Context
 ```
 
-Returns an object that serves as a `Positional` for all of the strings of the Serialization Contexts on which this bytecode depends.
+Returns a list of strings of the Serialization Contexts on which this bytecode depends.
 
 strings
 -------
@@ -106,7 +119,7 @@ strings
 .say for $M.strings[^10];  # The first 10 strings on the string heap
 ```
 
-Returns an object that serves as a `Positional` for all of the strings on the string heap.
+Returns a [Strings](Strings) object that serves as a `Positional` for all of the strings on the string heap.
 
 version
 -------

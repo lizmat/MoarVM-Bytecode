@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.5  2024-04-17T12:22:35+02:00
     - Make frame reification lazy and abstract this into a Frames object
     - Add "reify-all" method to Frames object to reify all Frame object
       that haven't been reified before, in a hypered way.
