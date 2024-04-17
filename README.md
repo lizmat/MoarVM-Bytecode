@@ -213,7 +213,7 @@ HEADER SHORTCUTS
 
 The following methods provide shortcuts to the values in the bytecode header. They are explained in the [MoarVM documentation](https://github.com/MoarVM/MoarVM/blob/main/docs/bytecode.markdown#bytecode).
 
-`sc-dependencies-offset`, `sc-dependencies-entries`, `extension-ops-offset`, `extension-ops-entries`, `frames-data-offset`, `frames-data-entries`, `callsites-data-offset`, `callsites-data-entries`, `string-heap-offset`, `string-heap-entries`, `sc-data-offset`, `sc-data-length`, `bytecode-offset`, `bytecode-length`, `annotation-offset`, `annotation-length`, `main-entry-frame-index`, `library-load-frame-index`, `deserialization-frame-index`
+`sc-dependencies-offset`, `sc-dependencies-entries`, `extension-ops-offset`, `extension-ops-entries`, `frames-data-offset`, `frames-data-entries`, `callsites-data-offset`, `callsites-data-entries`, `string-heap-offset`, `string-heap-entries`, `sc-data-offset`, `sc-data-length`, `bytecode-offset`, `bytecode-length`, `annotation-data-offset`, `annotation-data-length`, `main-entry-frame-index`, `library-load-frame-index`, `deserialization-frame-index`
 
 SUBCLASSES
 ==========

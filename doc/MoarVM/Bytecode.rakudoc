@@ -256,7 +256,7 @@ C<callsites-data-offset>,  C<callsites-data-entries>,
 C<string-heap-offset>,     C<string-heap-entries>,
 C<sc-data-offset>,         C<sc-data-length>,
 C<bytecode-offset>,        C<bytecode-length>,
-C<annotation-offset>,      C<annotation-length>,
+C<annotation-data-offset>, C<annotation-data-length>,
 C<main-entry-frame-index>,
 C<library-load-frame-index>,
 C<deserialization-frame-index>

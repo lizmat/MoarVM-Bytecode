@@ -420,8 +420,8 @@ class MoarVM::Bytecode {
     method sc-data-length()          { self.uint32(56) }
     method bytecode-offset()         { self.uint32(60) }
     method bytecode-length()         { self.uint32(64) }
-    method annotation-offset()       { self.uint32(68) }
-    method annotation-length()       { self.uint32(72) }
+    method annotation-data-offset()  { self.uint32(68) }
+    method annotation-data-length()  { self.uint32(72) }
 
     method main-entry-frame-index()      { self.uint32(80) }
     method library-load-frame-index()    { self.uint32(84) }
