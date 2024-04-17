@@ -1,6 +1,9 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Make frame reification lazy and abstract this into a Frames object
+    - Add "reify-all" method to Frames object to reify all Frame object
+      that haven't been reified before, in a hypered way.
 
 0.0.4  2024-04-16T20:24:22+02:00
     - Simplify internal representation of "sc-dependencies"

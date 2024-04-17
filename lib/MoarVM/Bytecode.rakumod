@@ -68,7 +68,7 @@ my class MoarVM::Bytecode::Lexical {
 my class MoarVM::Bytecode::Strings does List::Agnostic {
     has        $!M       is built;
     has uint32 @!offsets is built;
-    has int    $.elems;
+    has uint   $.elems;
 
     my int @extra = 4, 7, 6, 5;
 
@@ -103,87 +103,71 @@ my class MoarVM::Bytecode::Strings does List::Agnostic {
     }
 }
 
-#- MoarVM::Bytecode ------------------------------------------------------------
-class MoarVM::Bytecode {
-    has Buf     $.bytecode;
-    has Strings $.strings         is built(False);
-    has         @.sc-dependencies is built(False);
-    has         @.extension-ops   is built(False);
-    has         @.frames          is built(False);
+#- MoarVM::Bytecode::Frames ----------------------------------------------------
+# Encapsulate the frames heap as a Positional
+my class MoarVM::Bytecode::Frames does List::Agnostic {
+    has      $!M      is built;
+    has      @!frames is built;
+    has uint $.elems;
 
-    # Object setup
-    multi method new(Str:D $path) {
-        self.new($path.chars == 1 ?? self.setting($path) !! $path.IO )
-    }
-    multi method new(IO:D $io) {
-        self.new($io.slurp(:bin))
-    }
-    multi method new(Blob:D $bytecode) {
-        self.bless(:$bytecode)
-    }
+    method new($M) {
+        my $bc        := $M.bytecode;
+        my constant LE = LittleEndian;
 
-    method TWEAK() {
-        my $bytecode := $!bytecode;
+        my uint32 @frames;
 
-        my $magic := $bytecode[^8].chrs;
-        die Q|Unsupported magic string: expected "MOARVM\r\n" but got | ~ $magic
-          unless $magic eq "MOARVM\r\n";
+        my int $offset = $M.frames-data-offset;
+        my int $elems  = $M.frames-data-entries;
+        my int $i;
+        while $i < $elems {
+            @frames.push: $offset;
 
-        my $version := self.version;
-        die Q|Unsupported bytecode version: expected 7 but got | ~ $version
-          unless $version == 7;
+            my $num-locals   := $bc.read-uint32($offset +  8, LE);
+            my $num-lexicals := $bc.read-uint32($offset + 12, LE);
+            my $num-handlers := $bc.read-uint32($offset + 34, LE);
+            my $num-values   := $bc.read-uint16($offset + 40, LE);
+            my $num-names    := $bc.read-uint16($offset + 50, LE);
 
-        $!strings         := Strings.new(self);
-        @!sc-dependencies := self!make-sc-dependencies;
-        @!extension-ops   := self!make-extension-ops;
-        @!frames          := self!make-frames;
-    }
+            $offset = $offset + 54 + $num-locals * 2 + $num-lexicals * 6;
 
-    # Helper methods for creating object, mostly for readability
-    method !make-sc-dependencies() {
-        my $strings         := $!strings;
-        my $sc-dependencies := IterationBuffer.new;
+            # Handlers have a variable data size in version 7, depending on
+            # a bit in the category mask
+            for ^$num-handlers {
+                $offset = $offset  # check category mask
+                  + ($bc.read-uint32($offset + 8, LE) +& 4096 ?? 22 !! 20);
+            }
 
-        my uint $offset = self.sc-dependencies-offset;
-        my uint $last   = $offset + (self.sc-dependencies-entries * 4);
-        while $offset < $last {
-            $sc-dependencies.push: $strings[self.uint32($offset)];
-            $offset = $offset + 4;
+            $offset = $offset + $num-values * 12 + $num-names * 6;
+
+            ++$i;
         }
-        $sc-dependencies.List
+
+        self.bless(:$M, :@frames, :$elems)
     }
 
-    method !make-extension-ops() {
-        my $bytecode      := $!bytecode;
-        my $strings       := $!strings;
-        my $extension-ops := IterationBuffer.new;
-
-        my $offset = self.extension-ops-offset;
-        my $last   = $offset + (self.extension-ops-entries * 12);
-        while $offset < $last {
-            $extension-ops.push: ExtensionOp.new(
-              :name($strings[self.uint32($offset)]),
-              :descriptor($bytecode.subbuf($offset + 4, 8))
-            );
-            $offset = $offset + 12;
+    method AT-POS(Int:D $pos) {
+        if $pos < 0 || $pos >= $!elems {
+            Nil
         }
-        $extension-ops.List
-    }
-
-    method !make-frames() {
-        my $frames := IterationBuffer.new;
-
-        my $offset = self.frames-data-offset;
-        for ^self.frames-data-entries {
-            $frames.push(self!make-frame-at($offset, $_));
+        else {
+            (my $frame := @!frames[$pos]) ~~ Int
+              ?? (@!frames[$pos] := self!make-frame-at($frame, $pos))
+              !! $frame
         }
-        $frames.List
     }
 
-    method !make-frame-at(\current, $index) {
-        my int $offset = current;
-        my $bc        := $!bytecode;
-        my $st        := $!strings;
+    method reify-all(:$batch = 4) {
+        my @frames is List = @!frames.pairs.hyper(:$batch).map: {
+            (my $offset := .value) ~~ Int
+              ?? self!make-frame-at($offset, .key)  # need to reify
+              !! $offset                            # already reified
+        }
+        @!frames := @frames;
+    }
+
+    method !make-frame-at(uint $offset is copy, uint $index) {
+        my $bc        := $!M.bytecode;
+        my $st        := $!M.strings;
         my constant LE = LittleEndian;
 
         my $bytecode-offset           :=     $bc.read-uint32($offset,      LE);
@@ -236,7 +220,7 @@ class MoarVM::Bytecode {
                 $offset = $offset + 2;
             }
 
-            @handlers.push: Handler.new(
+            @handlers.push: MoarVM::Bytecode::Handler.new(
               :$start-protected-region, :$end-protected-region, :$category-mask,
               :$action, :$register-with-block, :$handler-goto, :$extra
             );
@@ -256,17 +240,84 @@ class MoarVM::Bytecode {
             $offset = $offset + 6;
         }
 
-        @locals   .= map({Local.new(|$_)});
-        @lexicals .= map({Lexical.new(|$_)});
+        @locals   .= map({MoarVM::Bytecode::Local.new(|$_)});
+        @lexicals .= map({MoarVM::Bytecode::Lexical.new(|$_)});
 
-        current = $offset;
-        Frame.new(
+        MoarVM::Bytecode::Frame.new(
           :$index, :$bytecode-offset, :$bytecode-length, :$num-locals,
           :$num-lexicals, :$cuuid, :$name, :$outer-index,
           :$annotation-offset, :$annotation-entries, :$num-handlers,
           :$flags, :$sc-dependency-index, :$sc-object-index,
           :@locals, :@lexicals, :@handlers
         )
+    }
+}
+
+#- MoarVM::Bytecode ------------------------------------------------------------
+class MoarVM::Bytecode {
+    has Buf     $.bytecode;
+    has Strings $.strings         is built(False);
+    has         @.sc-dependencies is built(False);
+    has         @.extension-ops   is built(False);
+    has Frames  $.frames          is built(False);
+
+    # Object setup
+    multi method new(Str:D $path) {
+        self.new($path.chars == 1 ?? self.setting($path) !! $path.IO )
+    }
+    multi method new(IO:D $io) {
+        self.new($io.slurp(:bin))
+    }
+    multi method new(Blob:D $bytecode) {
+        self.bless(:$bytecode)
+    }
+
+    method TWEAK() {
+        my $bytecode := $!bytecode;
+
+        my $magic := $bytecode[^8].chrs;
+        die Q|Unsupported magic string: expected "MOARVM\r\n" but got | ~ $magic
+          unless $magic eq "MOARVM\r\n";
+
+        my $version := self.version;
+        die Q|Unsupported bytecode version: expected 7 but got | ~ $version
+          unless $version == 7;
+
+        $!strings         := Strings.new(self);
+        @!sc-dependencies := self!make-sc-dependencies;
+        @!extension-ops   := self!make-extension-ops;
+        $!frames          := Frames.new(self);
+    }
+
+    # Helper methods for creating object, mostly for readability
+    method !make-sc-dependencies() {
+        my $strings         := $!strings;
+        my $sc-dependencies := IterationBuffer.new;
+
+        my uint $offset = self.sc-dependencies-offset;
+        my uint $last   = $offset + (self.sc-dependencies-entries * 4);
+        while $offset < $last {
+            $sc-dependencies.push: $strings[self.uint32($offset)];
+            $offset = $offset + 4;
+        }
+        $sc-dependencies.List
+    }
+
+    method !make-extension-ops() {
+        my $bytecode      := $!bytecode;
+        my $strings       := $!strings;
+        my $extension-ops := IterationBuffer.new;
+
+        my $offset = self.extension-ops-offset;
+        my $last   = $offset + (self.extension-ops-entries * 12);
+        while $offset < $last {
+            $extension-ops.push: ExtensionOp.new(
+              :name($strings[self.uint32($offset)]),
+              :descriptor($bytecode.subbuf($offset + 4, 8))
+            );
+            $offset = $offset + 12;
+        }
+        $extension-ops.List
     }
 
     # Other basic accessors

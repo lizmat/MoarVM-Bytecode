@@ -90,6 +90,23 @@ bytecode.  Each element consists of an L<ExtensionOp> object.
 
 =end code
 
+=head2 frames
+
+=begin code :lang<raku>
+
+.say for $M.frames[^10];  # The first 10 frames on the frame heap
+
+my @frames := $M.frames.reify-all;
+
+=end code
+
+Returns a L<Frames> object that serves as a C<Positional> for all of the
+frames on the frame heap.  Since the reification of a L<Frame|#Frame>
+object is rather expensive, this is done lazily on each access.
+
+To reify all C<Frame> objects at once, one can call the C<reify-all>
+method, which also returns a list of the reified C<Frame> objects.
+
 =head2 hll-name
 
 =begin code :lang<raku>
@@ -109,8 +126,8 @@ Returns the HLL language name for this bytecode.  Most likely "Raku", or
 
 =end code
 
-Returns an object that serves as a C<Positional> for all of the strings of
-the Serialization Contexts on which this bytecode depends.
+Returns a list of strings of the Serialization Contexts on which this
+bytecode depends.
 
 =head2 strings
 
@@ -120,8 +137,8 @@ the Serialization Contexts on which this bytecode depends.
 
 =end code
 
-Returns an object that serves as a C<Positional> for all of the strings on
-the string heap.
+Returns a L<Strings> object that serves as a C<Positional> for all of the
+strings on the string heap.
 
 =head2 version
 
