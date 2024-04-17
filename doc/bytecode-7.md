@@ -257,6 +257,9 @@ Next comes the handlers table. Each handler has an entry as follows:
     |    32-bit unsigned integer                              |
     +---------------------------------------------------------+
 
+From version 7 and up, an additional 16-bit unsigned integer value
+is added if the category mask bitfield has bit 0x01000 set.
+
 From version 4 and up, this is followed by a static lexical values
 table. Each entry is as follows:
 
@@ -295,9 +298,11 @@ be set up, and a table pointing to them created. This means that a
 callsite descriptor will always be a pointer + offset away.
 
 Each callsite consists of a 16-bit unsigned integer indicating the number
-of argument flags. This is followed by the flags, taking 8 bits each. If
-the number of argument flags is odd, then an extra padding byte will be
-written afterwards. Since version 3, this is then followed with one index
+of argument flags of which only the lowest 8 bits should be considered.
+
+This is followed by the flags, taking 8 bits each. If the number of
+argument flags is odd, then an extra padding byte will be written
+afterwards. Since version 3, this is then followed with one index
 to the string heap (in the form of a 32-bit integer) for each argument flag
 that has the `MVM_CALLSITE_ARG_NAMED` bit set.
 
