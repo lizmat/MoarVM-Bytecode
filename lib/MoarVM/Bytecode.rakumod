@@ -8,6 +8,51 @@ my constant @localtype = <
   10     11   12    13    14    15    16    uint8  uint16 uint32
   uint64
 >;
+my constant LE = LittleEndian;
+
+# From src/core/callsite.h
+my constant MVM_CALLSITE_ARG_OBJ     =   1; # object
+my constant MVM_CALLSITE_ARG_INT     =   2; # native integer, signed
+my constant MVM_CALLSITE_ARG_NUM     =   4; # native floating point number
+my constant MVM_CALLSITE_ARG_STR     =   8; # native NFG string (MVMString REPR)
+my constant MVM_CALLSITE_ARG_LITERAL =  16; # literal
+my constant MVM_CALLSITE_ARG_NAMED   =  32; # named argument
+my constant MVM_CALLSITE_ARG_FLAT    =  64; # flattened argument
+my constant MVM_CALLSITE_ARG_UINT    = 128; # native integer, unsigned
+
+#- MoarVM::Bytecode::Argument --------------------------------------------------
+my class MoarVM::Bytecode::Argument is Int {
+    method name(         --> ""  ) { }
+    method is-positional(--> True) { }
+
+    method flags()        { self                                  }
+    method is-literal()   { self +& MVM_CALLSITE_ARG_LITERAL && 1 }
+    method is-flattened() { self +& MVM_CALLSITE_ARG_FLAT    && 1 }
+
+    method type() {
+        self +& MVM_CALLSITE_ARG_STR
+          ?? str
+          !! self +& MVM_CALLSITE_ARG_INT
+            ?? int
+            !! self +& MVM_CALLSITE_ARG_UINT
+              ?? uint
+              !! self +& MVM_CALLSITE_ARG_NUM
+                ?? num
+                !! Mu  # assume MVM_CALLSITE_ARG_OBJ
+    }
+}
+
+# Role to mixin name for named arguments
+my role MoarVM::Bytecode::Name {
+    has $.name;
+
+    method is-positional(--> False) { }
+}
+
+#- MoarVM::Bytecode::Callsite --------------------------------------------------
+my class MoarVM::Bytecode::Callsite {
+    has @.arguments;
+}
 
 #- MoarVM::Bytecode::ExtensionOp -----------------------------------------------
 my class MoarVM::Bytecode::ExtensionOp {
@@ -61,6 +106,10 @@ my class MoarVM::Bytecode::Lexical {
     has uint16 $.flags;
     has uint32 $.sc-dependency-index;
     has uint32 $.sc-object-index;
+
+    method is-static-value()  { $!flags == 0 }
+    method is-container-var() { $!flags == 1 }
+    method is-state-var()     { $!flags == 2 }
 }
 
 #- MoarVM::Bytecode::Strings ---------------------------------------------------
@@ -112,7 +161,6 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
 
     method new($M) {
         my $bc        := $M.bytecode;
-        my constant LE = LittleEndian;
 
         my uint32 @frames;
 
@@ -168,7 +216,6 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
     method !make-frame-at(uint $offset is copy, uint $index) {
         my $bc        := $!M.bytecode;
         my $st        := $!M.strings;
-        my constant LE = LittleEndian;
 
         my $bytecode-offset           :=     $bc.read-uint32($offset,      LE);
         my $bytecode-length           :=     $bc.read-uint32($offset +  4, LE);
@@ -260,6 +307,7 @@ class MoarVM::Bytecode {
     has         @.sc-dependencies is built(False);
     has         @.extension-ops   is built(False);
     has Frames  $.frames          is built(False);
+    has         @.callsites       is built(False);
 
     # Object setup
     multi method new(Str:D $path) {
@@ -287,6 +335,7 @@ class MoarVM::Bytecode {
         @!sc-dependencies := self!make-sc-dependencies;
         @!extension-ops   := self!make-extension-ops;
         $!frames          := Frames.new(self);
+        @!callsites       := self!make-callsites;
     }
 
     # Helper methods for creating object, mostly for readability
@@ -318,6 +367,39 @@ class MoarVM::Bytecode {
             $offset = $offset + 12;
         }
         $extension-ops.List
+    }
+
+    method !make-callsites() {
+        my $bytecode  := $!bytecode;
+        my $strings   := $!strings;
+        my $callsites := IterationBuffer.new;
+
+        my uint $offset  = self.callsites-data-offset;
+        my uint $entries = self.callsites-data-entries;
+        for ^$entries {
+            my @arguments;
+            my @nameds;
+
+            my $num-args := $bytecode.read-uint16($offset, LE) +& 0x0ff;
+            $offset = $offset + 2;
+
+            for ^$num-args {
+                my uint8 $flags = $bytecode.read-uint8($offset++);
+                @arguments.push: Argument.new($flags);
+                @nameds.push($_) if $flags +& MVM_CALLSITE_ARG_NAMED;
+            }
+
+            ++$offset if $num-args +& 1;  # padding to 16bit boundary
+
+            for @nameds {
+                @arguments[$_] := @arguments[$_]
+                  but Name($strings[$bytecode.read-uint32($offset, LE)]);
+                $offset = $offset + 4;
+            }
+
+            $callsites.push: Callsite.new(:@arguments);
+        }
+        $callsites.List
     }
 
     # Other basic accessors

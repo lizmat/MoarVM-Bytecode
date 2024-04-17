@@ -1,24 +1,29 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Add "Callsite" and "Argument" classes and a first stab at documenting
+      them
+    - Add "callsites" method, a list of "Callsite" objects
 
 0.0.5  2024-04-17T12:22:35+02:00
-    - Make frame reification lazy and abstract this into a Frames object
-    - Add "reify-all" method to Frames object to reify all Frame object
-      that haven't been reified before, in a hypered way.
+    - Add "Frames" class to provide a lazy positional interface to frame
+      information
+    - Make frame reification lazy and abstract this into a "Frames" object
+    - Add "reify-all" method to "Frames" object to reify all "Frame" object
+      that haven't been reified before, in a hypered way
 
 0.0.4  2024-04-16T20:24:22+02:00
     - Simplify internal representation of "sc-dependencies"
     - Move documentation to separate file for convenience
     - Add level 7 bytecode documentation from MoarVM repo for reference
     - Add "str" utility method
-    - Add ExtensionOp, Frame, Local and Lexical classes and a first
+    - Add "ExtensionOp", "Frame", "Local" and "Lexical" classes and a first
       stab at documenting them
-    - Add instance method "extension-ops", a list of ExtensionOp objects
-    - Add instance method "frames" returning a Frame object for each frame
+    - Add instance method "extension-ops", a list of "ExtensionOp" objects
+    - Add instance method "frames" returning a "Frame" object for each frame
 
 0.0.3  2024-04-15T18:44:58+02:00
-    - Add instance method "sc-dependencies" providing a Positional
+    - Add instance method "sc-dependencies" providing a positional
       interface to the Serialization Context dependencies
 
 0.0.2  2024-04-15T13:24:25+02:00

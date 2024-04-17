@@ -73,19 +73,38 @@ Returns an `IO::Path` of the bytecode file of the given setting letter. Assumes 
 INSTANCE METHODS
 ================
 
+callsites
+---------
+
+```raku
+.say for $M.callsites[^10];  # show the first 10 callsites
+```
+
+Returns a list of [Callsite](#Callsite) objects, which contains information about the arguments at a given callsite.
+
 extension-ops
 -------------
 
 ```raku
-Returns a list of NQP extension operators that have been added to this
-bytecode.  Each element consists of an L<ExtensionOp> object.
+.say for $M.extension-ops;  # show all extension ops
 ```
+
+Returns a list of NQP extension operators that have been added to this bytecode. Each element consists of an [ExtensionOp](ExtensionOp) object.
+
+extension-ops
+-------------
+
+```raku
+.say for $M.extension-ops;  # show all extension ops
+```
+
+Returns a list of NQP extension operators that have been added to this bytecode. Each element consists of an [ExtensionOp](ExtensionOp) object.
 
 frames
 ------
 
 ```raku
-.say for $M.frames[^10];  # The first 10 frames on the frame heap
+.say for $M.frames[^10];  # show the first 10 frames on the frame heap
 
 my @frames := $M.frames.reify-all;
 ```
@@ -198,6 +217,56 @@ The following methods provide shortcuts to the values in the bytecode header. Th
 
 SUBCLASSES
 ==========
+
+Argument
+--------
+
+The `Argument` class provides these methods:
+
+  * flags
+
+The raw 8-bit bitmap of flags. The following bits have been defined:
+
+    * 1 - object
+
+    * 2 - native integer, signed
+
+    * 4 - native floating point number
+
+    * 8 - native NFG string (MVMString REPR)
+
+    * 16 - literal
+
+    * 32 - named argument
+
+    * 64 - flattened argument
+
+    * 128 - native integer, unsigned
+
+  * is-flattened
+
+Returns 1 if the argument is flattened, else 0.
+
+  * is-literal
+
+Returns 1 if the argument is a literal value, else 0.
+
+  * name
+
+The name of the argument if it is a named argument, else the empty string.
+
+  * type
+
+The type of the argument: possible values are `Mu` (indicating a HLL object of some kind), or any of the basic native types: `str`, `int`, `uint` or `num`.
+
+Callsite
+--------
+
+The `Callsite` class provides these methods:
+
+  * arguments
+
+The list of [Argument](Argument) objects for this callsite, if any.
 
 ExtensionOp
 -----------

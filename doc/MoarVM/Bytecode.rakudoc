@@ -81,20 +81,44 @@ Assumes the currently lowest supported setting by default.
 
 =head1 INSTANCE METHODS
 
+=head2 callsites
+
+=begin code :lang<raku>
+
+.say for $M.callsites[^10];  # show the first 10 callsites
+
+=end code
+
+Returns a list of L<Callsite|#Callsite> objects, which contains
+information about the arguments at a given callsite.
+
 =head2 extension-ops
 
 =begin code :lang<raku>
 
+.say for $M.extension-ops;  # show all extension ops
+
+=end code
+
 Returns a list of NQP extension operators that have been added to this
 bytecode.  Each element consists of an L<ExtensionOp> object.
 
+=head2 extension-ops
+
+=begin code :lang<raku>
+
+.say for $M.extension-ops;  # show all extension ops
+
 =end code
+
+Returns a list of NQP extension operators that have been added to this
+bytecode.  Each element consists of an L<ExtensionOp> object.
 
 =head2 frames
 
 =begin code :lang<raku>
 
-.say for $M.frames[^10];  # The first 10 frames on the frame heap
+.say for $M.frames[^10];  # show the first 10 frames on the frame heap
 
 my @frames := $M.frames.reify-all;
 
@@ -238,6 +262,49 @@ C<library-load-frame-index>,
 C<deserialization-frame-index>
 
 =head1 SUBCLASSES
+
+=head2 Argument
+
+The C<Argument> class provides these methods:
+
+=item flags
+
+The raw 8-bit bitmap of flags.  The following bits have been defined:
+
+=item2   1 - object
+=item2   2 - native integer, signed
+=item2   4 - native floating point number
+=item2   8 - native NFG string (MVMString REPR)
+=item2  16 - literal
+=item2  32 - named argument
+=item2  64 - flattened argument
+=item2 128 - native integer, unsigned
+
+=item is-flattened
+
+Returns 1 if the argument is flattened, else 0.
+
+=item is-literal
+
+Returns 1 if the argument is a literal value, else 0.
+
+=item name
+
+The name of the argument if it is a named argument, else the empty string.
+
+=item type
+
+The type of the argument: possible values are C<Mu> (indicating a HLL
+object of some kind), or any of the basic native types: C<str>, C<int>,
+C<uint> or C<num>.
+
+=head2 Callsite
+
+The C<Callsite> class provides these methods:
+
+=item arguments
+
+The list of L<Argument> objects for this callsite, if any.
 
 =head2 ExtensionOp
 

@@ -1,7 +1,7 @@
 use Test;
 use MoarVM::Bytecode;
 
-plan 9;
+plan 10;
 
 my str $setting = "c";
 my $M := MoarVM::Bytecode.new($setting);
@@ -35,5 +35,7 @@ is $M.extension-ops.elems, $M.extension-ops-entries,
   "Found $M.extension-ops.elems() extension ops in $setting setting";
 is $M.frames.elems, $M.frames-data-entries,
   "Found $M.frames.elems() frames in $setting setting";
+is $M.callsites.elems, $M.callsites-data-entries,
+  "Found $M.callsites.elems() callsites in $setting setting";
 
 # vim: expandtab shiftwidth=4
