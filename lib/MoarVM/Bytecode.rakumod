@@ -63,6 +63,10 @@ my class MoarVM::Bytecode::Callsite {
 my class MoarVM::Bytecode::ExtensionOp {
     has str $.name;
     has Buf $.descriptor;
+
+    multi method gist(MoarVM::Bytecode::ExtensionOp:D:) {
+        "$!name.fmt('%-16s') ($!descriptor.gist.substr(14, *-1))"
+    }
 }
 
 #- MoarVM::Bytecode::Frame -----------------------------------------------------
@@ -101,8 +105,8 @@ my class MoarVM::Bytecode::Handler {
 
 #- MoarVM::Bytecode::Local -----------------------------------------------------
 my class MoarVM::Bytecode::Local {
-    has str    $.name;
-    has str    $.type;
+    has str $.name;
+    has str $.type;
 }
 
 #- MoarVM::Bytecode::Lexical ---------------------------------------------------
@@ -163,6 +167,10 @@ my class MoarVM::Bytecode::Strings does List::Agnostic {
               !! $!M.slice( $offset + 4, $bytes +> 1).chrs
         }
     }
+
+    method gist(MoarVM::Bytecode::Strings:D:) {
+        "String Heap: $!elems different strings"
+    }
 }
 
 #- MoarVM::Bytecode::Frames ----------------------------------------------------
@@ -171,11 +179,21 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
     has      $!M      is built;
     has      @!frames is built;
     has uint $.elems;
+    has uint $.total-locals;
+    has uint $.total-lexicals;
+    has uint $.total-handlers;
+    has uint $.total-lexical-values;
+    has uint $.total-local-debug-names;
 
     method new($M) {
-        my $bc        := $M.bytecode;
+        my $bc := $M.bytecode;
 
         my uint32 @frames;
+        my uint $total-locals;
+        my uint $total-lexicals;
+        my uint $total-handlers;
+        my uint $total-lexical-values;
+        my uint $total-local-debug-names;
 
         my int $offset = $M.frames-data-offset;
         my int $elems  = $M.frames-data-entries;
@@ -200,10 +218,20 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
 
             $offset = $offset + $num-values * 12 + $num-names * 6;
 
+            # Update statistics
+            $total-locals            += $num-locals;
+            $total-lexicals          += $num-lexicals;
+            $total-handlers          += $num-handlers;
+            $total-lexical-values    += $num-values;
+            $total-local-debug-names += $num-names;
+
             ++$i;
         }
 
-        self.bless(:$M, :@frames, :$elems)
+        self.bless(
+          :$M, :@frames, :$elems, :$total-locals, :$total-lexicals,
+          :$total-handlers, :$total-lexical-values, :$total-local-debug-names
+        )
     }
 
     method AT-POS(Int:D $pos) {
@@ -338,10 +366,27 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         $frame := $frame but MoarVM::Bytecode::Filename($filename) if $filename;
         $frame
     }
+
+    method gist(MoarVM::Bytecode::Frames:D:) {
+        my str @parts = "Frames: $!elems";
+        @parts.push: "$!total-locals.fmt('%8d') local variables"
+          if $!total-locals;
+        @parts.push: "$!total-lexicals.fmt('%8d') lexical variables"
+          if $!total-lexicals;
+        @parts.push: "$!total-handlers.fmt('%8d') handlers"
+          if $!total-handlers;
+        @parts.push: "$!total-lexical-values.fmt('%8d') static lexical values"
+          if $!total-lexical-values;
+        @parts.push: "$!total-local-debug-names.fmt('%8d') local debug names"
+          if $!total-local-debug-names;
+
+        @parts.join("\n")
+    }
 }
 
 #- MoarVM::Bytecode ------------------------------------------------------------
 class MoarVM::Bytecode {
+    has str     $.path;
     has Buf     $.bytecode;
     has Strings $.strings         is built(False);
     has         @.sc-dependencies is built(False);
@@ -350,14 +395,15 @@ class MoarVM::Bytecode {
     has         @.callsites       is built(False);
 
     # Object setup
-    multi method new(Str:D $path) {
-        self.new($path.chars == 1 ?? self.setting($path) !! $path.IO )
+    multi method new(Str:D $path is copy) {
+        $path = self.setting($path) if $path.chars == 1;
+        self.new($path.IO )
     }
     multi method new(IO:D $io) {
-        self.new($io.slurp(:bin))
+        self.new($io.slurp(:bin), :path($io.absolute))
     }
-    multi method new(Blob:D $bytecode) {
-        self.bless(:$bytecode)
+    multi method new(Blob:D $bytecode, :$path = "") {
+        self.bless(:$bytecode, :$path)
     }
 
     method TWEAK() {
@@ -380,13 +426,15 @@ class MoarVM::Bytecode {
 
     # Helper methods for creating object, mostly for readability
     method !make-sc-dependencies() {
+        my $bytecode        := $!bytecode;
         my $strings         := $!strings;
         my $sc-dependencies := IterationBuffer.new;
 
         my uint $offset = self.sc-dependencies-offset;
         my uint $last   = $offset + (self.sc-dependencies-entries * 4);
         while $offset < $last {
-            $sc-dependencies.push: $strings[self.uint32($offset)];
+            $sc-dependencies.push:
+              $strings[$bytecode.read-uint32($offset, LE)];
             $offset = $offset + 4;
         }
         $sc-dependencies.List
@@ -401,7 +449,7 @@ class MoarVM::Bytecode {
         my $last   = $offset + (self.extension-ops-entries * 12);
         while $offset < $last {
             $extension-ops.push: ExtensionOp.new(
-              :name($strings[self.uint32($offset)]),
+              :name($strings[$bytecode.read-uint32($offset, LE)]),
               :descriptor($bytecode.subbuf($offset + 4, 8))
             );
             $offset = $offset + 12;
@@ -529,6 +577,35 @@ class MoarVM::Bytecode {
 
     method files() {
         paths(self.rootdir, :file(*.ends-with(".moarvm"))).sort
+    }
+
+    multi method gist(MoarVM::Bytecode:D:) {
+        my str $head  = $!path ?? "File: $!path" !! "Created from a Blob";
+        my str @parts = "$head ($!bytecode.elems() bytes)";
+
+        @parts.push: $!strings.gist;
+        @parts.push: $!frames.gist;
+        if @!callsites.elems -> $elems {
+            @parts.push: "Call sites: $elems";
+        }
+
+        if @!extension-ops -> @ops {
+            @parts.push: "Extension Ops: @ops.elems()";
+            @parts.push: "  $_.gist()" for @ops;
+        }
+        else {
+            @parts.push: "Extension Ops: none";
+        }
+
+        if @!sc-dependencies -> @deps {
+            @parts.push: "Serialization context dependencies: @deps.elems()";
+            @parts.push: "  $_" for @deps;
+        }
+        else {
+            @parts.push: "Serialization context dependencies: none";
+        }
+
+        @parts.join("\n")
     }
 }
 
