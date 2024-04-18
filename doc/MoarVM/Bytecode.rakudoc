@@ -267,32 +267,32 @@ C<deserialization-frame-index>
 
 The C<Argument> class provides these methods:
 
-=item flags
+=head3 flags
 
 The raw 8-bit bitmap of flags.  The following bits have been defined:
 
-=item2   1 - object
-=item2   2 - native integer, signed
-=item2   4 - native floating point number
-=item2   8 - native NFG string (MVMString REPR)
-=item2  16 - literal
-=item2  32 - named argument
-=item2  64 - flattened argument
-=item2 128 - native integer, unsigned
+=item   1 - object
+=item   2 - native integer, signed
+=item   4 - native floating point number
+=item   8 - native NFG string (MVMString REPR)
+=item  16 - literal
+=item  32 - named argument
+=item  64 - flattened argument
+=item 128 - native integer, unsigned
 
-=item is-flattened
+=head3 is-flattened
 
 Returns 1 if the argument is flattened, else 0.
 
-=item is-literal
+=head3 is-literal
 
 Returns 1 if the argument is a literal value, else 0.
 
-=item name
+=head3 name
 
 The name of the argument if it is a named argument, else the empty string.
 
-=item type
+=head3 type
 
 The type of the argument: possible values are C<Mu> (indicating a HLL
 object of some kind), or any of the basic native types: C<str>, C<int>,
@@ -302,7 +302,7 @@ C<uint> or C<num>.
 
 The C<Callsite> class provides these methods:
 
-=item arguments
+=head3 arguments
 
 The list of L<Argument> objects for this callsite, if any.
 
@@ -310,11 +310,11 @@ The list of L<Argument> objects for this callsite, if any.
 
 The C<ExtensionOp> class provides these methods:
 
-=item name
+=head3 name
 
 The name with which the extension op can be called
 
-=item descriptor
+=head3 descriptor
 
 An 8-byte C<Buf> with descriptor information
 
@@ -322,116 +322,116 @@ An 8-byte C<Buf> with descriptor information
 
 The C<Frame> class provides these methods:
 
-=item annotation-entries
+=head3 annotation-entries
 
 A 32-bit unsigned integer offset for the number of annotations of
 this frame.
 
-=item annotation-offset
+=head3 annotation-offset
 
 A 32-bit unsigned integer offset in the annotations segment of the
 bytecode annotations of this frame.
 
-=item bytecode-length
+=head3 bytecode-length
 
 A 32-bit unsigned integer representing the number of bytes of
 bytecode of this frame.
 
-=item bytecode-offset
+=head3 bytecode-offset
 
 A 32-bit unsigned integer offset in the bytecode segment of the
 bytecode of this frame.
 
-=item cuuid
+=head3 cuuid
 
 A string representing the compilation unit ID.
 
-=item flags
+=head3 flags
 
 A 16-bit unsigned integer bitmap with flags of this frame.
 
-=item handlers
+=head3 handlers
 
 A list of L<Handler|#Handler> objects, representing the handlers in this frame.
 
-=item has-exit-handler
+=head3 has-exit-handler
 
 1 if this frame has an exit handler, otherwise 0.
 
-=item index
+=head3 index
 
 A 16-bit unsigned integer indicating the frame index of this frame.
 
-=item is-thunk
+=head3 is-thunk
 
 1 if this frame is a thunk (as opposed to a real scope), otherwise 0.
 
-=item lexicals
+=head3 lexicals
 
 A list of L<Lexical|#Lexical> objects, representing the lexicals in this frame.
 
-=item locals
+=head3 locals
 
 A list of L<Local|#Local> objects, representing the locals in this frame.
 
-=item name
+=head3 name
 
 The name of this frame, if any.
 
-=item no-outer
+=head3 no-outer
 
 1 if this frame has no outer, otherwise 0.
 
-=item outer-index
+=head3 outer-index
 
 A 16-bit unsigned integer indicating the frame index of the outer frame.
 
-=item sc-dependency-index
+=head3 sc-dependency-index
 
 A 32-bit unsigned integer index into
 
-=item sc-object-index
+=head3 sc-object-index
 
 A 32-bit unsigned integer index into
 
 =head2 Handler
 
-=item start-protected-region
-=item end-protected-region
-=item category-mask
-=item action
-=item register-with-block
-=item handler-goto
+=head3 start-protected-region
+=head3 end-protected-region
+=head3 category-mask
+=head3 action
+=head3 register-with-block
+=head3 handler-goto
 
 =head2 Lexical
 
-=item name
+=head3 name
 
 The name of this lexical, if any.
 
-=item type
+=head3 type
 
 The type of this lexical.
 
-=item flags
+=head3 flags
 
 A 16-bit unsigned integer bitmap for this lexical.
 
-=item sc-dependency-index
+=head3 sc-dependency-index
 
 Index of into the C<sc-dependencies> list.
 
-=item sc-object-index
+=head3 sc-object-index
 
 Index of into the C<sc-dependencies> list.
 
 =head2 Local
 
-=item name
+=head3 name
 
 The name of this local, if any.
 
-=item type
+=head3 type
 
 The type of this local.
 

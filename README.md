@@ -223,39 +223,39 @@ Argument
 
 The `Argument` class provides these methods:
 
-  * flags
+### flags
 
 The raw 8-bit bitmap of flags. The following bits have been defined:
 
-    * 1 - object
+  * 1 - object
 
-    * 2 - native integer, signed
+  * 2 - native integer, signed
 
-    * 4 - native floating point number
+  * 4 - native floating point number
 
-    * 8 - native NFG string (MVMString REPR)
+  * 8 - native NFG string (MVMString REPR)
 
-    * 16 - literal
+  * 16 - literal
 
-    * 32 - named argument
+  * 32 - named argument
 
-    * 64 - flattened argument
+  * 64 - flattened argument
 
-    * 128 - native integer, unsigned
+  * 128 - native integer, unsigned
 
-  * is-flattened
+### is-flattened
 
 Returns 1 if the argument is flattened, else 0.
 
-  * is-literal
+### is-literal
 
 Returns 1 if the argument is a literal value, else 0.
 
-  * name
+### name
 
 The name of the argument if it is a named argument, else the empty string.
 
-  * type
+### type
 
 The type of the argument: possible values are `Mu` (indicating a HLL object of some kind), or any of the basic native types: `str`, `int`, `uint` or `num`.
 
@@ -264,7 +264,7 @@ Callsite
 
 The `Callsite` class provides these methods:
 
-  * arguments
+### arguments
 
 The list of [Argument](Argument) objects for this callsite, if any.
 
@@ -273,11 +273,11 @@ ExtensionOp
 
 The `ExtensionOp` class provides these methods:
 
-  * name
+### name
 
 The name with which the extension op can be called
 
-  * descriptor
+### descriptor
 
 An 8-byte `Buf` with descriptor information
 
@@ -286,120 +286,120 @@ Frame
 
 The `Frame` class provides these methods:
 
-  * annotation-entries
+### annotation-entries
 
 A 32-bit unsigned integer offset for the number of annotations of this frame.
 
-  * annotation-offset
+### annotation-offset
 
 A 32-bit unsigned integer offset in the annotations segment of the bytecode annotations of this frame.
 
-  * bytecode-length
+### bytecode-length
 
 A 32-bit unsigned integer representing the number of bytes of bytecode of this frame.
 
-  * bytecode-offset
+### bytecode-offset
 
 A 32-bit unsigned integer offset in the bytecode segment of the bytecode of this frame.
 
-  * cuuid
+### cuuid
 
 A string representing the compilation unit ID.
 
-  * flags
+### flags
 
 A 16-bit unsigned integer bitmap with flags of this frame.
 
-  * handlers
+### handlers
 
 A list of [Handler](#Handler) objects, representing the handlers in this frame.
 
-  * has-exit-handler
+### has-exit-handler
 
 1 if this frame has an exit handler, otherwise 0.
 
-  * index
+### index
 
 A 16-bit unsigned integer indicating the frame index of this frame.
 
-  * is-thunk
+### is-thunk
 
 1 if this frame is a thunk (as opposed to a real scope), otherwise 0.
 
-  * lexicals
+### lexicals
 
 A list of [Lexical](#Lexical) objects, representing the lexicals in this frame.
 
-  * locals
+### locals
 
 A list of [Local](#Local) objects, representing the locals in this frame.
 
-  * name
+### name
 
 The name of this frame, if any.
 
-  * no-outer
+### no-outer
 
 1 if this frame has no outer, otherwise 0.
 
-  * outer-index
+### outer-index
 
 A 16-bit unsigned integer indicating the frame index of the outer frame.
 
-  * sc-dependency-index
+### sc-dependency-index
 
 A 32-bit unsigned integer index into
 
-  * sc-object-index
+### sc-object-index
 
 A 32-bit unsigned integer index into
 
 Handler
 -------
 
-  * start-protected-region
+### start-protected-region
 
-  * end-protected-region
+### end-protected-region
 
-  * category-mask
+### category-mask
 
-  * action
+### action
 
-  * register-with-block
+### register-with-block
 
-  * handler-goto
+### handler-goto
 
 Lexical
 -------
 
-  * name
+### name
 
 The name of this lexical, if any.
 
-  * type
+### type
 
 The type of this lexical.
 
-  * flags
+### flags
 
 A 16-bit unsigned integer bitmap for this lexical.
 
-  * sc-dependency-index
+### sc-dependency-index
 
 Index of into the `sc-dependencies` list.
 
-  * sc-object-index
+### sc-object-index
 
 Index of into the `sc-dependencies` list.
 
 Local
 -----
 
-  * name
+### name
 
 The name of this local, if any.
 
-  * type
+### type
 
 The type of this local.
 

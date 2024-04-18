@@ -5,6 +5,7 @@ Revision history for MoarVM::Bytecode
       the "Bytecode" object to "annotation-data-offset" and
       "annotation-data-offset" to avoid confusion with similarly
       named methods on the "Frame" object
+    - Reformat documentation a bit
 
 0.0.6  2024-04-17T21:31:28+02:00
     - Add "Callsite" and "Argument" classes and a first stab at
