@@ -317,14 +317,6 @@ Frame
 
 The `Frame` class provides these methods:
 
-### annotation-entries
-
-A 32-bit unsigned integer offset for the number of annotations of this frame.
-
-### annotation-offset
-
-A 32-bit unsigned integer offset in the annotations segment of the bytecode annotations of this frame.
-
 ### bytecode-length
 
 A 32-bit unsigned integer representing the number of bytes of bytecode of this frame.
@@ -385,6 +377,10 @@ A 32-bit unsigned integer index into
 
 A 32-bit unsigned integer index into
 
+### statements
+
+A list of [Statement](#Statement) objects for this frame, may be empty.
+
 Handler
 -------
 
@@ -433,6 +429,17 @@ The name of this local, if any.
 ### type
 
 The type of this local.
+
+Statement
+---------
+
+### line
+
+The line number of this statement.
+
+### offset
+
+The bytecode offset of this statement.
 
 AUTHOR
 ======

@@ -362,16 +362,6 @@ An 8-byte C<Buf> with descriptor information
 
 The C<Frame> class provides these methods:
 
-=head3 annotation-entries
-
-A 32-bit unsigned integer offset for the number of annotations of
-this frame.
-
-=head3 annotation-offset
-
-A 32-bit unsigned integer offset in the annotations segment of the
-bytecode annotations of this frame.
-
 =head3 bytecode-length
 
 A 32-bit unsigned integer representing the number of bytes of
@@ -434,6 +424,10 @@ A 32-bit unsigned integer index into
 
 A 32-bit unsigned integer index into
 
+=head3 statements
+
+A list of L<Statement|#Statement> objects for this frame, may be empty.
+
 =head2 Handler
 
 =head3 start-protected-region
@@ -474,6 +468,16 @@ The name of this local, if any.
 =head3 type
 
 The type of this local.
+
+=head2 Statement
+
+=head3 line
+
+The line number of this statement.
+
+=head3 offset
+
+The bytecode offset of this statement.
 
 =head1 AUTHOR
 

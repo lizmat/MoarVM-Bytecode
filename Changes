@@ -9,6 +9,17 @@ Revision history for MoarVM::Bytecode
     - Document method "uint16"
     - Add utility methods "uint16s" and "uints32" and document
       them
+    - Remove attribute "name" from "Frame" class to be replaced by
+      a lazily mixed in role method "name" if the object actually
+      has a name
+    - Add lazily mixed in role method "filename" to "Frame" objects
+      if the object actually has a filename
+    - Add class "Statement" to capture information about a statement:
+      For now this will only "offset" and "line" methods
+    - Add method "statements" to "Frame" class, containing the
+      "Statement" objects of the frame.
+    - Remove "annotation-offset" and "annotation-entries" methods
+      from the "Frame" object
 
 0.0.6  2024-04-17T21:31:28+02:00
     - Add "Callsite" and "Argument" classes and a first stab at

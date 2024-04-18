@@ -20,14 +20,26 @@ my constant MVM_CALLSITE_ARG_NAMED   =  32; # named argument
 my constant MVM_CALLSITE_ARG_FLAT    =  64; # flattened argument
 my constant MVM_CALLSITE_ARG_UINT    = 128; # native integer, unsigned
 
+#- MoarVM::Bytecode::Filename --------------------------------------------------
+# Role to mixin name for objects that sometimes have a filename
+my role MoarVM::Bytecode::Filename {
+    has $.filename;
+}
+
+#- MoarVM::Bytecode::Name ------------------------------------------------------
+# Role to mixin name for objects that sometimes have a name
+my role MoarVM::Bytecode::Name {
+    has $.name;
+}
+
 #- MoarVM::Bytecode::Argument --------------------------------------------------
 my class MoarVM::Bytecode::Argument is Int {
-    method name(         --> ""  ) { }
-    method is-positional(--> True) { }
+    method name(--> "") { }
 
-    method flags()        { self                                  }
-    method is-literal()   { self +& MVM_CALLSITE_ARG_LITERAL && 1 }
-    method is-flattened() { self +& MVM_CALLSITE_ARG_FLAT    && 1 }
+    method flags()         { self                                  }
+    method is-positional() { self.name eq ""                       }
+    method is-literal()    { self +& MVM_CALLSITE_ARG_LITERAL && 1 }
+    method is-flattened()  { self +& MVM_CALLSITE_ARG_FLAT    && 1 }
 
     method type() {
         self +& MVM_CALLSITE_ARG_STR
@@ -40,13 +52,6 @@ my class MoarVM::Bytecode::Argument is Int {
                 ?? num
                 !! Mu  # assume MVM_CALLSITE_ARG_OBJ
     }
-}
-
-# Role to mixin name for named arguments
-my role MoarVM::Bytecode::Name {
-    has $.name;
-
-    method is-positional(--> False) { }
 }
 
 #- MoarVM::Bytecode::Callsite --------------------------------------------------
@@ -66,16 +71,17 @@ my class MoarVM::Bytecode::Frame {
     has uint32 $.bytecode-offset;
     has uint32 $.bytecode-length;
     has str    $.cuuid;
-    has str    $.name;
     has uint16 $.outer-index;
-    has uint32 $.annotation-offset;
-    has uint32 $.annotation-entries;
     has uint16 $.flags;
     has uint32 $.sc-dependency-index;
     has uint32 $.sc-object-index;
+    has        @.statements;
     has        @.locals;
     has        @.lexicals;
     has        @.handlers;
+
+    method name(    --> "") { }
+    method filename(--> "") { }
 
     method no-outer()         { $!outer-index == $!index }
     method has-exit-handler() { $!flags +& 1             }
@@ -110,6 +116,13 @@ my class MoarVM::Bytecode::Lexical {
     method is-static-value()  { $!flags == 0 }
     method is-container-var() { $!flags == 1 }
     method is-state-var()     { $!flags == 2 }
+}
+
+#- MoarVM::Bytecode::Statement -------------------------------------------------
+# Encapsulate statement (aka annotated bytecode information)
+my role MoarVM::Bytecode::Statement {
+    has uint32 $.line;
+    has uint32 $.offset;
 }
 
 #- MoarVM::Bytecode::Strings ---------------------------------------------------
@@ -214,8 +227,9 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
     }
 
     method !make-frame-at(uint $offset is copy, uint $index) {
-        my $bc        := $!M.bytecode;
-        my $st        := $!M.strings;
+        my $M  := $!M;
+        my $bc := $M.bytecode;
+        my $st := $M.strings;
 
         my $bytecode-offset           :=     $bc.read-uint32($offset,      LE);
         my $bytecode-length           :=     $bc.read-uint32($offset +  4, LE);
@@ -234,6 +248,21 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         my $num-debug-names           :=     $bc.read-uint32($offset + 50, LE);
         $offset = $offset + 54;
 
+        my str $filename;
+        my $statements := IterationBuffer.new;
+        if $annotation-entries {
+            my uint32 $offset = $M.annotation-data-offset + $annotation-offset;
+            $filename = $st[$bc.read-uint32($offset + 4, LE)];
+
+            for ^$annotation-entries {
+                $statements.push: MoarVM::Bytecode::Statement.new(
+                  :offset($bc.read-uint32($offset,     LE)),
+                  :line(  $bc.read-uint32($offset + 8, LE))
+                );
+                $offset = $offset + 12;
+            }
+        }
+
         my @locals;
         for ^$num-locals {
             @locals.push: {
@@ -251,7 +280,7 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
             $offset = $offset + 6;
         }
 
-        my @handlers;
+        my $handlers := IterationBuffer.new;
         for ^$num-handlers {
             my $start-protected-region := $bc.read-uint32($offset,      LE);
             my $end-protected-region   := $bc.read-uint32($offset +  4, LE);
@@ -267,7 +296,7 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
                 $offset = $offset + 2;
             }
 
-            @handlers.push: MoarVM::Bytecode::Handler.new(
+            $handlers.push: MoarVM::Bytecode::Handler.new(
               :$start-protected-region, :$end-protected-region, :$category-mask,
               :$action, :$register-with-block, :$handler-goto, :$extra
             );
@@ -287,16 +316,22 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
             $offset = $offset + 6;
         }
 
-        @locals   .= map({MoarVM::Bytecode::Local.new(|$_)});
-        @lexicals .= map({MoarVM::Bytecode::Lexical.new(|$_)});
+        my @statements := $statements.List;
+        my @handlers   := $handlers.List;
 
-        MoarVM::Bytecode::Frame.new(
+        @locals   := @locals.map(  {MoarVM::Bytecode::Local.new(  |$_)}).List;
+        @lexicals := @lexicals.map({MoarVM::Bytecode::Lexical.new(|$_)}).List;
+
+        my $frame := MoarVM::Bytecode::Frame.new(
           :$index, :$bytecode-offset, :$bytecode-length, :$num-locals,
-          :$num-lexicals, :$cuuid, :$name, :$outer-index,
-          :$annotation-offset, :$annotation-entries, :$num-handlers,
+          :$num-lexicals, :$cuuid, :$outer-index, :$num-handlers,
           :$flags, :$sc-dependency-index, :$sc-object-index,
-          :@locals, :@lexicals, :@handlers
-        )
+          :@statements, :@handlers, :@locals, :@lexicals
+        );
+
+        $frame := $frame but MoarVM::Bytecode::Name(    $name    ) if $name;
+        $frame := $frame but MoarVM::Bytecode::Filename($filename) if $filename;
+        $frame
     }
 }
 
