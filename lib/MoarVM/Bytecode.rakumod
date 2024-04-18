@@ -254,11 +254,16 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
             my uint32 $offset = $M.annotation-data-offset + $annotation-offset;
             $filename = $st[$bc.read-uint32($offset + 4, LE)];
 
+            my int $last-bc-offset;
             for ^$annotation-entries {
-                $statements.push: MoarVM::Bytecode::Statement.new(
-                  :offset($bc.read-uint32($offset,     LE)),
-                  :line(  $bc.read-uint32($offset + 8, LE))
-                );
+                my int $bc-offset = $bc.read-uint32($offset, LE);
+                if $bc-offset != $last-bc-offset {
+                    $statements.push: MoarVM::Bytecode::Statement.new(
+                      :offset($bc-offset),
+                      :line($bc.read-uint32($offset + 8, LE))
+                    );
+                    $last-bc-offset = $bc-offset;
+                }
                 $offset = $offset + 12;
             }
         }

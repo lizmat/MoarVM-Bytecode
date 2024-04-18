@@ -1,6 +1,7 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Only add "Statement" objects if the bytecode offset is different
 
 0.0.7  2024-04-18T13:16:30+02:00
     - Rename "annotation-offset" and "annotation-length" methods on
