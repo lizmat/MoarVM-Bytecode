@@ -428,30 +428,48 @@ class MoarVM::Bytecode {
     method deserialization-frame-index() { self.uint32(88) }
 
     # Utility methods
-    method uint16(int $offset) {
+    method uint16(uint $offset) {
         $!bytecode.read-uint16($offset, LittleEndian)
     }
-
-    method uint32(int $offset) {
-        $!bytecode.read-uint32($offset, LittleEndian)
+    method uint16s(uint $offset is copy, uint $entries = 16) {
+        my $bytecode := $!bytecode;
+        my uint16 @values;
+        for ^$entries {
+            @values.push: $bytecode.read-uint16($offset, LittleEndian);
+            $offset = $offset + 2;
+        }
+        @values
     }
 
-    method str(int $offset) {
+    method uint32(uint $offset) {
+        $!bytecode.read-uint32($offset, LittleEndian)
+    }
+    method uint32s(uint $offset is copy, uint $entries = 16) {
+        my $bytecode := $!bytecode;
+        my uint32 @values;
+        for ^$entries {
+            @values.push: $bytecode.read-uint32($offset, LittleEndian);
+            $offset = $offset + 4;
+        }
+        @values
+    }
+
+    method str(uint $offset) {
         $!strings[$!bytecode.read-uint32($offset, LittleEndian)]
     }
 
-    method slice(int $offset, int $bytes = 256) {
+    method slice(uint $offset, uint $bytes = 256) {
         $!bytecode[$offset ..^ $offset + $bytes]
     }
 
     method subbuf(
-      int $offset,
-      int $bytes = $!bytecode.elems - $offset
+      uint $offset,
+      uint $bytes = $!bytecode.elems - $offset
     ) {
         $!bytecode.subbuf($offset, $bytes)
     }
 
-    method hexdump(int $offset, int $bytes = 256) {
+    method hexdump(uint $offset, uint $bytes = 256) {
         use HexDump::Tiny:ver<0.6>:auth<zef:raku-community-modules>;
         hexdump(
           $!bytecode.subbuf(

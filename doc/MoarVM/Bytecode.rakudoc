@@ -196,8 +196,8 @@ say $M.hexdump($M.string-heap-offset, 1024);
 
 =end code
 
-Returns a hexdump representation of the bytecode from the given byte offset
-for the given number of bytes (256 by default).
+Returns a hexdump representation of the bytecode from the given byte
+offset for the given number of bytes (256 by default).
 
 =head2 slice
 
@@ -209,8 +209,8 @@ dd $M.slice(0, 8).chrs;     # "MOARVM\r\n"
 
 Returns a C<List> of unsigned 32-bit integers from the given offset and
 number of bytes.  Basically a shortcut for
-C<$M,bytecode[$offset ..^ $offset + $bytes]>.  The number of bytes defaults
-to C<256> if not specified.
+C<$M,bytecode[$offset ..^ $offset + $bytes]>.  The number of bytes
+defaults to C<256> if not specified.
 
 =head2 str
 
@@ -233,15 +233,55 @@ dd $M.subbuf(0, 8).decode;  # "MOARVM\r\n"
 Calls C<subbuf> on the C<bytecode> and returns the result.  Basically a
 shortcut for C<$M.bytecode.subbuf(...)>.
 
+=head2 uint16
+
+=begin code :lang<raku>
+
+my $i = $M.uint16($offset);
+
+=end code
+
+Returns the unsigned 16-bit integer value at the given offset in the
+bytecode.
+
+=head2 uint16s
+
+=begin code :lang<raku>
+
+my @values := = $M.uint16s($M.string-heap-offset);  # 16 entries
+
+my @values := $M.uint16s($M.string-heap-offset, $entries);
+
+=end code
+
+Returns an unsigned 16-bit integer array for the given number of
+entries at the given offset in the bytecode.  The number of entries
+defaults to 16 if not specified.
+
 =head2 uint32
 
 =begin code :lang<raku>
 
-my $i = $M.uint32($M.string-heap-offset);
+my $i = $M.uint32($offset);
 
 =end code
 
-Returns the unsigned 32-bit integer value at the given offset in the bytecode.
+Returns the unsigned 32-bit integer value at the given offset in the
+bytecode.
+
+=head2 uint32s
+
+=begin code :lang<raku>
+
+my @values := = $M.uint32s($offset);  # 16 entries
+
+my @values := $M.uint32s($offset, $entries);
+
+=end code
+
+Returns an unsigned 32-bit integer array for the given number of
+entries at the given offset in the bytecode.  The number of entries
+defaults to 16 if not specified.
 
 =head1 HEADER SHORTCUTS
 

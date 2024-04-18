@@ -199,14 +199,45 @@ dd $M.subbuf(0, 8).decode;  # "MOARVM\r\n"
 
 Calls `subbuf` on the `bytecode` and returns the result. Basically a shortcut for `$M.bytecode.subbuf(...)`.
 
+uint16
+------
+
+```raku
+my $i = $M.uint16($offset);
+```
+
+Returns the unsigned 16-bit integer value at the given offset in the bytecode.
+
+uint16s
+-------
+
+```raku
+my @values := = $M.uint16s($M.string-heap-offset);  # 16 entries
+
+my @values := $M.uint16s($M.string-heap-offset, $entries);
+```
+
+Returns an unsigned 16-bit integer array for the given number of entries at the given offset in the bytecode. The number of entries defaults to 16 if not specified.
+
 uint32
 ------
 
 ```raku
-my $i = $M.uint32($M.string-heap-offset);
+my $i = $M.uint32($offset);
 ```
 
 Returns the unsigned 32-bit integer value at the given offset in the bytecode.
+
+uint32s
+-------
+
+```raku
+my @values := = $M.uint32s($offset);  # 16 entries
+
+my @values := $M.uint32s($offset, $entries);
+```
+
+Returns an unsigned 32-bit integer array for the given number of entries at the given offset in the bytecode. The number of entries defaults to 16 if not specified.
 
 HEADER SHORTCUTS
 ================
