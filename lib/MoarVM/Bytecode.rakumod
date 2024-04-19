@@ -625,6 +625,15 @@ class MoarVM::Bytecode {
         paths(self.rootdir, :file(*.ends-with(".moarvm"))).sort
     }
 
+    method ops() {
+        Map.new: self.rootdir.add("nqp/MoarVM/src/core/oplist").lines.map({
+            if $_ && !.starts-with("#") {
+                my @parts = .words;
+                @parts.shift => @parts
+            }
+        })
+    }
+
     multi method gist(MoarVM::Bytecode:D:) {
         my str $head  = $!path ?? "File: $!path" !! "Created from a Blob";
         my str @parts = "$head ($!bytecode.elems() bytes)";
