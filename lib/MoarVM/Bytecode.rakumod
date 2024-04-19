@@ -52,6 +52,16 @@ my class MoarVM::Bytecode::Argument is Int {
                 ?? num
                 !! Mu  # assume MVM_CALLSITE_ARG_OBJ
     }
+
+    multi method gist(MoarVM::Bytecode::Argument:D:) {
+        my str $type = self.type.^name;
+        my str @parts = $type eq "Mu" ?? "object" !! $type;
+
+        @parts.push: self.name ?? ":$.name" !! "positional";
+        @parts.push: "flattened" if self.is-flattened;
+
+        @parts.join(" ")
+    }
 }
 
 #- MoarVM::Bytecode::Callsite --------------------------------------------------
@@ -90,6 +100,29 @@ my class MoarVM::Bytecode::Frame {
     method no-outer()         { $!outer-index == $!index }
     method has-exit-handler() { $!flags +& 1             }
     method is-thunk()         { $!flags +& 2 && 1        }
+
+    multi method gist(MoarVM::Bytecode::Frame:D:) {
+        my str @parts = $!cuuid.fmt("%4d");
+
+        if self.filename -> $filename is copy {
+            $filename = $filename.split("/").tail;
+            @parts.push: @!statements
+              ?? "$filename:@!statements.head.line()"
+              !! $filename;
+
+            if self.name -> $name {
+                @parts.push: qq/"$name"/;
+            }
+        }
+
+        @parts.push: "no-outer"         if self.no-outer;
+        @parts.push: "has-exit-handler" if self.has-exit-handler;
+        @parts.push: "is-thunk"         if self.is-thunk;
+
+        @parts.push: "(@!statements.elems() stmts, $!bytecode-length bytes)";
+
+        @parts.join(" ");
+    }
 }
 
 #- MoarVM::Bytecode::Handler --------------------------------------------
@@ -107,6 +140,10 @@ my class MoarVM::Bytecode::Handler {
 my class MoarVM::Bytecode::Local {
     has str $.name;
     has str $.type;
+
+    multi method gist(MoarVM::Bytecode::Local:D:) {
+        "$!type $!name"
+    }
 }
 
 #- MoarVM::Bytecode::Lexical ---------------------------------------------------
@@ -120,6 +157,11 @@ my class MoarVM::Bytecode::Lexical {
     method is-static-value()  { $!flags == 0 }
     method is-container-var() { $!flags == 1 }
     method is-state-var()     { $!flags == 2 }
+
+    multi method gist(MoarVM::Bytecode::Lexical:D:) {
+        ($!flags ?? $!flags == 1 ?? 'container ' !! 'state ' !! 'static ')
+         ~ " $!type $!name";
+    }
 }
 
 #- MoarVM::Bytecode::Statement -------------------------------------------------
@@ -127,6 +169,10 @@ my class MoarVM::Bytecode::Lexical {
 my role MoarVM::Bytecode::Statement {
     has uint32 $.line;
     has uint32 $.offset;
+
+    multi method gist(MoarVM::Bytecode::Statement:D:) {
+        "line $!line offset $!offset"
+    }
 }
 
 #- MoarVM::Bytecode::Strings ---------------------------------------------------

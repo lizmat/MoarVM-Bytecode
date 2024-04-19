@@ -1,6 +1,7 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Make sure all classes have at least a rudimentary "gist" method
 
 0.0.8  2024-04-18T22:56:28+02:00
     - Only add "Statement" objects if the bytecode offset is different
