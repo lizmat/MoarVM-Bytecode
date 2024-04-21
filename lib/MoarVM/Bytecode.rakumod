@@ -1,5 +1,6 @@
 # An attempt at providing introspection into the MoarVM bytecode format
 
+use MoarVM::Ops;
 use List::Agnostic:ver<0.0.1>:auth<zef:lizmat>;
 use paths:ver<10.0.9>:auth<zef:lizmat>;
 
@@ -623,15 +624,6 @@ class MoarVM::Bytecode {
 
     method files() {
         paths(self.rootdir, :file(*.ends-with(".moarvm"))).sort
-    }
-
-    method ops() {
-        Map.new: self.rootdir.add("nqp/MoarVM/src/core/oplist").lines.map({
-            if $_ && !.starts-with("#") {
-                my @parts = .words;
-                @parts.shift => @parts
-            }
-        })
     }
 
     multi method gist(MoarVM::Bytecode:D:) {

@@ -15,7 +15,8 @@
   "name": "MoarVM::Bytecode",
   "perl": "6.d",
   "provides": {
-    "MoarVM::Bytecode": "lib/MoarVM/Bytecode.rakumod"
+    "MoarVM::Bytecode": "lib/MoarVM/Bytecode.rakumod",
+    "MoarVM::Ops": "lib/MoarVM/Ops.rakumod"
   },
   "resources": [
   ],

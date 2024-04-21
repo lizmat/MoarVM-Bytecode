@@ -303,6 +303,8 @@ C<deserialization-frame-index>
 
 =head1 SUBCLASSES
 
+Instances of these classes are usually created automatically.
+
 =head2 Argument
 
 The C<Argument> class provides these methods:
@@ -478,6 +480,32 @@ The line number of this statement.
 =head3 offset
 
 The bytecode offset of this statement.
+
+=head2 Op
+
+=head attributes
+
+A C<Map> of additional attribute strings.
+
+=head3 index
+
+The numerical index of this operation.
+
+=head3 name
+
+The name of this operation.
+
+=head3 type
+
+The (special) type of this operation.  Currently recognized are:
+
+=item dispatch
+=item jump
+=item parameter
+=item return
+=item spesh
+
+If this is not a special operation, the type will be the empty string.
 
 =head1 AUTHOR
 

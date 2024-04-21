@@ -1,7 +1,7 @@
 use Test;
 use MoarVM::Bytecode;
 
-plan 11;
+plan 12;
 
 my str $setting = "c";
 my $M := MoarVM::Bytecode.new($setting);
@@ -38,6 +38,16 @@ is $M.frames.elems, $M.frames-data-entries,
 is $M.callsites.elems, $M.callsites-data-entries,
   "Found $M.callsites.elems() callsites in $setting setting";
 
-ok $M.ops.elems > 0, 'Did we get ops info';
+for MoarVM::Op.new(0), MoarVM::Op.new("no_op") -> $op {
+    subtest "Check if op info can be obtained" => {
+        plan 5;
+
+        is        $op.name,       "no_op",           "is name of op ok";
+        is        $op.type,       "",                "is type of op ok";
+        is        $op.index,      0,                 "is index of op ok";
+        is-deeply $op.registers,  (),                "no registers involved?";
+        is-deeply $op.attributes, { :confprog }.Map, "a single attribute?";
+    }
+}
 
 # vim: expandtab shiftwidth=4
