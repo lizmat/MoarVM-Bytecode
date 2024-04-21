@@ -249,6 +249,8 @@ The following methods provide shortcuts to the values in the bytecode header. Th
 SUBCLASSES
 ==========
 
+Instances of these classes are usually created automatically.
+
 Argument
 --------
 
@@ -440,6 +442,58 @@ The line number of this statement.
 ### offset
 
 The bytecode offset of this statement.
+
+Op
+--
+
+### annotation
+
+The annotation of this operation. Currently recognized annotations are:
+
+  * dispatch
+
+  * jump
+
+  * parameter
+
+  * return
+
+  * spesh
+
+Absence of annotation if indicated by the empty string. See also [is-sequence](#is-sequence).
+
+head
+====
+
+attributes
+
+A `Map` of additional attribute strings.
+
+### index
+
+The numerical index of this operation.
+
+### is-sequence
+
+True if this op is the start of a sequence of ops that share the same annotation.
+
+### name
+
+The name of this operation.
+
+### new
+
+```raku
+my $op = MoarVM::Op.new(0);
+
+my $op = MoarVM::Op.new("no_op");
+```
+
+Return an instantiated `MoarVM::Op` object from the given name or opcode number.
+
+### reify-all
+
+Makes sure all possible `MoarVM::Op` objects are created, and returns a list of them.
 
 AUTHOR
 ======

@@ -1,7 +1,7 @@
 use Test;
 use MoarVM::Bytecode;
 
-plan 12;
+plan 13;
 
 my str $setting = "c";
 my $M := MoarVM::Bytecode.new($setting);
@@ -40,14 +40,18 @@ is $M.callsites.elems, $M.callsites-data-entries,
 
 for MoarVM::Op.new(0), MoarVM::Op.new("no_op") -> $op {
     subtest "Check if op info can be obtained" => {
-        plan 5;
+        plan 7;
 
-        is        $op.name,       "no_op",           "is name of op ok";
-        is        $op.type,       "",                "is type of op ok";
-        is        $op.index,      0,                 "is index of op ok";
-        is-deeply $op.registers,  (),                "no registers involved?";
-        is-deeply $op.attributes, { :confprog }.Map, "a single attribute?";
+        is        $op.name,        "no_op",           "is name of op ok";
+        is        $op.annotation,  "",                "is annotation of op ok";
+        is-deeply $op.is-sequence, False,             "not a sequence";
+        is        $op.index,        0,                 "is index of op ok";
+        is        $op.bytes,       0,                 "is bytes of op ok";
+        is-deeply $op.registers,   (),                "no registers involved?";
+        is-deeply $op.attributes,  { :confprog }.Map, "a single attribute?";
     }
 }
+
+is MoarVM::Op.reify-all.elems, 973, "right number of ops?";
 
 # vim: expandtab shiftwidth=4

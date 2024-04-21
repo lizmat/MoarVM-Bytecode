@@ -483,6 +483,20 @@ The bytecode offset of this statement.
 
 =head2 Op
 
+=head3 annotation
+
+The annotation of this operation.  Currently recognized annotations
+are:
+
+=item dispatch
+=item jump
+=item parameter
+=item return
+=item spesh
+
+Absence of annotation if indicated by the empty string.  See also
+L<is-sequence|#is-sequence>.
+
 =head attributes
 
 A C<Map> of additional attribute strings.
@@ -491,21 +505,32 @@ A C<Map> of additional attribute strings.
 
 The numerical index of this operation.
 
+=head3 is-sequence
+
+True if this op is the start of a sequence of ops that share the
+same annotation.
+
 =head3 name
 
 The name of this operation.
 
-=head3 type
+=head3 new
 
-The (special) type of this operation.  Currently recognized are:
+=begin code :lang<raku>
 
-=item dispatch
-=item jump
-=item parameter
-=item return
-=item spesh
+my $op = MoarVM::Op.new(0);
 
-If this is not a special operation, the type will be the empty string.
+my $op = MoarVM::Op.new("no_op");
+
+=end code
+
+Return an instantiated C<MoarVM::Op> object from the given name or
+opcode number.
+
+=head3 reify-all
+
+Makes sure all possible C<MoarVM::Op> objects are created, and returns
+a list of them.
 
 =head1 AUTHOR
 

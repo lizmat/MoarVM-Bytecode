@@ -1957,42 +1957,75 @@ my constant %ops =
 
 my constant %op2index = @ops.kv.reverse;
 
-my constant %prefix2type =
-  ".d", "dispatch",
-  ".j", "jump",
-  ".p", "parameter",
-  ".r", "return",
-  ".s", "spesh", 
+# The first item on each line, can be a prefix
+my constant %annotation2name =
+  "d", "dispatch",
+  "j", "jump",
+  "p", "parameter",
+  "r", "return",
+  "s", "spesh", 
 ;
+
+my constant @attributes = %ops.values.map( {
+    (quietly .head.starts-with("." | ":") ?? .skip !! $_)
+      .map({ .substr(1) if .starts-with(":") }).Slip
+} ).unique.sort;
+
+# Since all Op objects are singletons, use this to store any instantiated ops
+my @reified-ops;
 
 #-------------------------------------------------------------------------------
 # Front end class for the MoarVM operator information
 class MoarVM::Op {
     has str  $.name;
-    has str  $.type;
     has uint $.index;
-    has List $.registers;
-    has Map  $.attributes;
+    has uint $.bytes;
+    has str  $.annotation;
+    has Bool $.is-sequence is built(:bind);
+    has List $.registers   is built(:bind);
+    has Map  $.attributes  is built(:bind);
 
     proto method new(|) {*}
     multi method new(Int:D $index) {
-        self.new(@ops[$index] // die "No op known at index '$index'")
+        my $name := @ops[$index] // die "No op known at index '$index'";
+        @reified-ops[$index] // self!instantiate($name, $index)
     }
     multi method new(Str:D $name) {
-        my @info = %ops{$name} // die "No op known with name '$name'";
+        my $index := %op2index{$name} // die "No op known with name '$name'";
+        @reified-ops[$index] // self!instantiate($name, $index)
+    }
 
-        @info.shift if (my $type := %prefix2type{@info.head} // "");
-        my $index := %op2index{$name};
+    method !instantiate($name, $index) {
+        my @info = %ops{$name};
+        my $head := @info.head;
+
+        my $annotation  := "";
+        my $is-sequence := False;
+        if ($head.starts-with(".") || $head.starts-with(":"))
+          && %annotation2name{$head.substr(1)} -> $_ {
+            $annotation  := $_;
+            $is-sequence := True;
+            @info.shift;
+        }
 
         my @registers  is List = @info.grep: !*.starts-with(":");
         my %attributes is Map  = @info.map: {
             .substr(1) => True if .starts-with(":")
         }
 
-        self.bless(:$name, :$type, :$index, :@registers, :%attributes)
+        my uint $bytes = @registers * 2;  # initial guess
+
+        @reified-ops[$index] := self.bless(
+          :$name, :$index, :$bytes, :$annotation, :$is-sequence,
+          :@registers, :%attributes
+        )
     }
 
-    method all-ops() { @ops.map: { self.new($_) } }
+    method reify-all() {
+        @reified-ops = @ops.map: { self.new($_) }
+    }
+
+    method all-attributes() { @attributes }
 }
 
 # vim: expandtab shiftwidth=4
