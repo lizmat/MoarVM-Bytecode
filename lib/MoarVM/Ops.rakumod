@@ -1966,12 +1966,14 @@ my constant %annotation2name =
   "s", "spesh", 
 ;
 
-my constant @attributes = %ops.values.map( {
+my constant @adverbs = %ops.values.map( {
     (quietly .head.starts-with("." | ":") ?? .skip !! $_)
       .map({ .substr(1) if .starts-with(":") }).Slip
 } ).unique.sort;
 
-# Since all Op objects are singletons, use this to store any instantiated ops
+# Since most Op objects are singletons, use this as a compile time store.
+# If the number of bytes can not be determined at compile time, it will
+# be set to zero.
 my @reified-ops;
 
 #-------------------------------------------------------------------------------
@@ -1983,49 +1985,117 @@ class MoarVM::Op {
     has str  $.annotation;
     has Bool $.is-sequence is built(:bind);
     has List $.registers   is built(:bind);
-    has Map  $.attributes  is built(:bind);
+    has Map  $.adverbs     is built(:bind);
 
     proto method new(|) {*}
     multi method new(Int:D $index) {
-        my $name := @ops[$index] // die "No op known at index '$index'";
-        @reified-ops[$index] // self!instantiate($name, $index)
+        @reified-ops[$index]
+          // "No op known at index $index: must be between 0 and @reified-ops.end()".Failure
     }
     multi method new(Str:D $name) {
-        my $index := %op2index{$name} // die "No op known with name '$name'";
-        @reified-ops[$index] // self!instantiate($name, $index)
+        my $index := %op2index{$name} // fail "No op known with name '$name'";
+        @reified-ops[$index]
     }
 
-    method !instantiate($name, $index) {
-        my @info = %ops{$name};
-        my $head := @info.head;
+
+    # The number of bytes an opcode takes *can* be dependent on the
+    # callsite, so can only be reliably calculated if the frame's
+    # callsites are also supplied.  As we don't have that here and
+    # now, reset to 0 bytes to indicate it's non-conclusive.
+    sub calculate-bytes(@registers, &variable-handler = -> $ { return 0 }) {
+        my uint $bytes = 2;
+        for @registers {
+            $bytes = $bytes + (.starts-with('r')
+              || .starts-with('w')
+              || .ends-with('8')
+              || .ends-with('16')
+              || $_ eq 'coderef'
+              || $_ eq 'sslot'
+              ?? 2
+              !! .ends-with('32')
+                || $_ eq 'ins'
+                || $_ eq 'str'
+                ?? 4
+                !! .ends-with('64')
+                  ?? 8
+                  !! $_ eq 'callsite'
+                    ?? variable-handler($bytes)
+                    !! die "don't know how to handle '$_'"
+            )
+        }
+
+        $bytes
+    }
+
+    method instantiate($index, $name) {
+        my @info = %ops{$name}<>;
 
         my $annotation  := "";
         my $is-sequence := False;
-        if ($head.starts-with(".") || $head.starts-with(":"))
-          && %annotation2name{$head.substr(1)} -> $_ {
-            $annotation  := $_;
-            $is-sequence := True;
-            @info.shift;
+        if @info.head -> $head {
+            if ($head.starts-with(".") || $head.starts-with(":"))
+              && %annotation2name{$head.substr(1)} -> $_ {
+                $annotation  := $_;
+                $is-sequence := $head.starts-with(":");
+                @info.shift;
+            }
+
+            # DEPRECATED ops may have these annotations
+            elsif $head.starts-with('+')
+              || $head.starts-with('-')
+              || $head.starts-with('*') {
+                @info.shift;  # ignore
+            }
         }
 
-        my @registers  is List = @info.grep: !*.starts-with(":");
-        my %attributes is Map  = @info.map: {
+        my @registers is List = @info.grep(!*.starts-with(":")).Slip;
+        my %adverbs   is Map  = @info.map: {
             .substr(1) => True if .starts-with(":")
         }
 
-        my uint $bytes = @registers * 2;  # initial guess
+        # The number of bytes an opcode takes *can* be dependent on the
+        # callsite, so can only be reliably calculated if the frame's
+        # callsites are also supplied.  As we don't have that here and
+        # now, reset to 0 bytes to indicate it's non-conclusive.
+        my uint $bytes = calculate-bytes(@registers);
 
-        @reified-ops[$index] := self.bless(
+        self.bless(
           :$name, :$index, :$bytes, :$annotation, :$is-sequence,
-          :@registers, :%attributes
+          :@registers, :%adverbs
         )
     }
 
-    method reify-all() {
-        @reified-ops = @ops.map: { self.new($_) }
+    multi method bytes(MoarVM::Op:D:) { $!bytes }
+    multi method bytes(MoarVM::Op:D: $frame, Int:D $offset) {
+        calculate-bytes $!registers, -> $bytes {
+            2 + $frame.callsites[
+              $frame.bytecode.read-uint16($offset + $bytes, LittleEndian)
+            ].bytes
+        }
     }
 
-    method all-attributes() { @attributes }
+    multi method gist(MoarVM::Op:D:) {
+        my str @parts = $!index.fmt('%3d');
+
+        @parts.push($!name);
+        @parts.push($!registers.join(','))
+          if $!registers.elems;
+        @parts.push($!is-sequence ?? "[:$!annotation]" !! "[.$!annotation]")
+          if $!annotation;
+        @parts.push: $!bytes ?? "($!bytes bytes)" !! "(variable length)";
+
+        @parts.join(' ')
+    }
+
+    method all-adverbs() { @adverbs     }
+    method all-ops()     { @reified-ops }
+}
+
+# Make sure we have singletons for all ops
+BEGIN {
+    for @ops.kv -> $index, $name {
+        @reified-ops[$index] := MoarVM::Op.instantiate($index, $name);
+    }
 }
 
 # vim: expandtab shiftwidth=4

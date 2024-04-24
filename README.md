@@ -70,6 +70,22 @@ my $setting = MoarVM::Bytecode.setting("d");
 
 Returns an `IO::Path` of the bytecode file of the given setting letter. Assumes the currently lowest supported setting by default.
 
+HELPER SCRIPTS
+==============
+
+opinfo
+------
+
+    $ opinfo if_i unless_i
+     24 if_i r(int64),ins (8 bytes)
+     25 unless_i r(int64),ins (8 bytes)
+
+    $ opinfo 42 666
+     42 bindlex_nn str,r(num64) (8 bytes)
+    666 atpos2d_s w(str),r(obj),r(int64),r(int64) (10 bytes)
+
+Helper script to show the gist of the given op name(s) or number(s).
+
 INSTANCE METHODS
 ================
 
@@ -319,13 +335,9 @@ Frame
 
 The `Frame` class provides these methods:
 
-### bytecode-length
+### bytecode
 
-A 32-bit unsigned integer representing the number of bytes of bytecode of this frame.
-
-### bytecode-offset
-
-A 32-bit unsigned integer offset in the bytecode segment of the bytecode of this frame.
+A `Buf` with the actual bytecode of this frame.
 
 ### cuuid
 
@@ -446,6 +458,14 @@ The bytecode offset of this statement.
 Op
 --
 
+### all-adverbs
+
+Return a `List` of all possible adverbs.
+
+### all-ops
+
+Return a `List` of all possible ops.
+
 ### annotation
 
 The annotation of this operation. Currently recognized annotations are:
@@ -465,9 +485,22 @@ Absence of annotation if indicated by the empty string. See also [is-sequence](#
 head
 ====
 
-attributes
+adverbs
 
-A `Map` of additional attribute strings.
+A `Map` of additional adverb strings.
+
+head
+====
+
+bytes
+
+```raku
+my $bytes := $op.bytes || $op.bytes($frame, $offset);
+```
+
+The number of bytes this op occupies in memory. Returns **0** if the op has a variable size.
+
+Some ops have a variable size depending on the callsite in the frame it is residing. For those cases, one can call the `bytes` method with the [Frame](#Frame) object and the offset in the bytecode of that frame to obtain the number of bytes for that instance.
 
 ### index
 
@@ -490,10 +523,6 @@ my $op = MoarVM::Op.new("no_op");
 ```
 
 Return an instantiated `MoarVM::Op` object from the given name or opcode number.
-
-### reify-all
-
-Makes sure all possible `MoarVM::Op` objects are created, and returns a list of them.
 
 AUTHOR
 ======

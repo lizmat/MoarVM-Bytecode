@@ -68,6 +68,8 @@ my class MoarVM::Bytecode::Argument is Int {
 #- MoarVM::Bytecode::Callsite --------------------------------------------------
 my class MoarVM::Bytecode::Callsite {
     has @.arguments;
+
+    method bytes() { 2 * @!arguments }
 }
 
 #- MoarVM::Bytecode::ExtensionOp -----------------------------------------------
@@ -83,17 +85,17 @@ my class MoarVM::Bytecode::ExtensionOp {
 #- MoarVM::Bytecode::Frame -----------------------------------------------------
 my class MoarVM::Bytecode::Frame {
     has uint32 $.index;
-    has uint32 $.bytecode-offset;
-    has uint32 $.bytecode-length;
     has str    $.cuuid;
     has uint16 $.outer-index;
     has uint16 $.flags;
     has uint32 $.sc-dependency-index;
     has uint32 $.sc-object-index;
-    has        @.statements;
-    has        @.locals;
-    has        @.lexicals;
-    has        @.handlers;
+    has        $.bytecode   is built(:bind);
+    has        @.statements is built(:bind);
+    has        @.locals     is built(:bind);
+    has        @.lexicals   is built(:bind);
+    has        @.handlers   is built(:bind);
+    has        @.callsites  is built(:bind);
 
     method name(    --> "") { }
     method filename(--> "") { }
@@ -101,6 +103,12 @@ my class MoarVM::Bytecode::Frame {
     method no-outer()         { $!outer-index == $!index }
     method has-exit-handler() { $!flags +& 1             }
     method is-thunk()         { $!flags +& 2 && 1        }
+
+    method bytecode() {
+        $!bytecode ~~ Callable
+          ?? ($!bytecode := $!bytecode())
+          !! $!bytecode
+    }
 
     multi method gist(MoarVM::Bytecode::Frame:D:) {
         my str @parts = $!cuuid.fmt("%4d");
@@ -120,7 +128,7 @@ my class MoarVM::Bytecode::Frame {
         @parts.push: "has-exit-handler" if self.has-exit-handler;
         @parts.push: "is-thunk"         if self.is-thunk;
 
-        @parts.push: "(@!statements.elems() stmts, $!bytecode-length bytes)";
+        @parts.push: "(@!statements.elems() stmts, $.bytecode.elems() bytes)";
 
         @parts.join(" ");
     }
@@ -306,8 +314,9 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         my $bc := $M.bytecode;
         my $st := $M.strings;
 
-        my $bytecode-offset           :=     $bc.read-uint32($offset,      LE);
-        my $bytecode-length           :=     $bc.read-uint32($offset +  4, LE);
+        my $bytecode-offset := $M.bytecode-offset + $bc.read-uint32($offset,LE);
+        my $bytecode-length := $bc.read-uint32($offset +  4, LE);
+
         my $num-locals                :=     $bc.read-uint32($offset +  8, LE);
         my $num-lexicals              :=     $bc.read-uint32($offset + 12, LE);
         my $cuuid                     := $st[$bc.read-uint32($offset + 16, LE)];
@@ -402,11 +411,14 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         @locals   := @locals.map(  {MoarVM::Bytecode::Local.new(  |$_)}).List;
         @lexicals := @lexicals.map({MoarVM::Bytecode::Lexical.new(|$_)}).List;
 
+        my $bytecode  := { $bc.subbuf($bytecode-offset, $bytecode-length) }
+        my @callsites := $M.callsites;
+
         my $frame := MoarVM::Bytecode::Frame.new(
-          :$index, :$bytecode-offset, :$bytecode-length, :$num-locals,
-          :$num-lexicals, :$cuuid, :$outer-index, :$num-handlers,
-          :$flags, :$sc-dependency-index, :$sc-object-index,
-          :@statements, :@handlers, :@locals, :@lexicals
+          :$index, :$bytecode, :$num-locals, :$num-lexicals, :$num-handlers,
+          :$cuuid, :$outer-index, :$flags,
+          :$sc-dependency-index, :$sc-object-index,
+          :@statements, :@handlers, :@locals, :@lexicals, :@callsites
         );
 
         $frame := $frame but MoarVM::Bytecode::Name(    $name    ) if $name;

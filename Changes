@@ -1,6 +1,21 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Removed the "bytecode-offset" and "bytecode-length" attributes
+      from the "Frame" class, and replaced these by a single "bytecode"
+      attribute that will lazily produce a C<Buf> with the actual
+      bytecode of the frame
+    - Rename the MoarVM::Op.attributes method to "adverbs" to more
+      closely match the wording used in MoarVM
+    - Pre-compile all possible MoarVM::Op objects, as they're all
+      singletons
+    - Replace the MoarVM::Op.reify-all method by "all-ops" method, as
+      all possible objects have already been reified
+    - Add MoarVM::Op "all-adverbs" method, which returns a list of
+      all possible adverbs
+    - Make MoarVM::Op.bytes smarter, as some ops have a variable size
+      depending on the actual instance in the bytecode
+    - Add "opinfo" helper script for interactive op lookup
 
 0.0.9  2024-04-21T20:10:38+02:00
     - Make sure all classes have at least a rudimentary "gist" method

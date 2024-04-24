@@ -45,13 +45,13 @@ for MoarVM::Op.new(0), MoarVM::Op.new("no_op") -> $op {
         is        $op.name,        "no_op",           "is name of op ok";
         is        $op.annotation,  "",                "is annotation of op ok";
         is-deeply $op.is-sequence, False,             "not a sequence";
-        is        $op.index,        0,                 "is index of op ok";
-        is        $op.bytes,       0,                 "is bytes of op ok";
+        is        $op.index,       0,                 "is index of op ok";
+        is        $op.bytes,       2,                 "is bytes of op ok";
         is-deeply $op.registers,   (),                "no registers involved?";
-        is-deeply $op.attributes,  { :confprog }.Map, "a single attribute?";
+        is-deeply $op.adverbs,     { :confprog }.Map, "a single attribute?";
     }
 }
 
-is MoarVM::Op.reify-all.elems, 973, "right number of ops?";
+is MoarVM::Op.all-ops.elems, 973, "Right number of ops?";
 
 # vim: expandtab shiftwidth=4

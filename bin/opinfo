@@ -1,0 +1,16 @@
+#- opinfo ----------------------------------------------------------------------
+# CLI to look up MoarVM opcode info by name or numerical value
+
+use MoarVM::Ops;
+
+my %*SUB-MAIN-OPTS = :coerce-allomorphs-to(Int);
+
+sub MAIN(*@ops) {
+    CATCH {
+        note .message;
+        exit 1;
+    }
+    say MoarVM::Op.new($_) for @ops;;
+}
+
+# vim: expandtab shiftwidth=4

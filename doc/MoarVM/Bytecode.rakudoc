@@ -79,6 +79,24 @@ my $setting = MoarVM::Bytecode.setting("d");
 Returns an C<IO::Path> of the bytecode file of the given setting letter.
 Assumes the currently lowest supported setting by default.
 
+=head1 HELPER SCRIPTS
+
+=head2 opinfo
+
+=begin code
+
+$ opinfo if_i unless_i
+ 24 if_i r(int64),ins (8 bytes)
+ 25 unless_i r(int64),ins (8 bytes)
+
+$ opinfo 42 666
+ 42 bindlex_nn str,r(num64) (8 bytes)
+666 atpos2d_s w(str),r(obj),r(int64),r(int64) (10 bytes)
+
+=end code
+
+Helper script to show the gist of the given op name(s) or number(s).
+
 =head1 INSTANCE METHODS
 
 =head2 callsites
@@ -364,15 +382,9 @@ An 8-byte C<Buf> with descriptor information
 
 The C<Frame> class provides these methods:
 
-=head3 bytecode-length
+=head3 bytecode
 
-A 32-bit unsigned integer representing the number of bytes of
-bytecode of this frame.
-
-=head3 bytecode-offset
-
-A 32-bit unsigned integer offset in the bytecode segment of the
-bytecode of this frame.
+A C<Buf> with the actual bytecode of this frame.
 
 =head3 cuuid
 
@@ -483,6 +495,14 @@ The bytecode offset of this statement.
 
 =head2 Op
 
+=head3 all-adverbs
+
+Return a C<List> of all possible adverbs.
+
+=head3 all-ops
+
+Return a C<List> of all possible ops.
+
 =head3 annotation
 
 The annotation of this operation.  Currently recognized annotations
@@ -497,9 +517,25 @@ are:
 Absence of annotation if indicated by the empty string.  See also
 L<is-sequence|#is-sequence>.
 
-=head attributes
+=head adverbs
 
-A C<Map> of additional attribute strings.
+A C<Map> of additional adverb strings.
+
+=head bytes
+
+=begin code :lang<raku>
+
+my $bytes := $op.bytes || $op.bytes($frame, $offset);
+
+=end code
+
+The number of bytes this op occupies in memory.  Returns B<0> if the
+op has a variable size.
+
+Some ops have a variable size depending on the callsite in the frame
+it is residing.  For those cases, one can call the C<bytes> method
+with the L<Frame|#Frame> object and the offset in the bytecode of
+that frame to obtain the number of bytes for that instance.
 
 =head3 index
 
@@ -526,11 +562,6 @@ my $op = MoarVM::Op.new("no_op");
 
 Return an instantiated C<MoarVM::Op> object from the given name or
 opcode number.
-
-=head3 reify-all
-
-Makes sure all possible C<MoarVM::Op> objects are created, and returns
-a list of them.
 
 =head1 AUTHOR
 
