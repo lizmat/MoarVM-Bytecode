@@ -302,9 +302,12 @@ of argument flags of which only the lowest 8 bits should be considered.
 
 This is followed by the flags, taking 8 bits each. If the number of
 argument flags is odd, then an extra padding byte will be written
-afterwards. Since version 3, this is then followed with one index
-to the string heap (in the form of a 32-bit integer) for each argument flag
-that has the `MVM_CALLSITE_ARG_NAMED` bit set.
+afterwards.
+
+Since version 3, this is then followed with one index to the string
+heap (in the form of a 32-bit unsigned integer) for each argument
+flag that has the `MVM_CALLSITE_ARG_NAMED` bit set and has the
+`MVM_CALLSITE_ARG_FLAT` bit **NOT** set.
 
 ## Bytecode segment
 This consists of a sequence of instructions. Instruction codes are always
@@ -321,14 +324,15 @@ have the needed operands described by the following set of descriptors.
     wl      lexical variable being written, 16 bits unsigned for the
             index within a frame and 16 bits for how many frames out
             to go to locate it
-    i16     16-bit integer constant
-    i32     32-bit integer constant
-    i64     64-bit integer constant
-    n32     32-bit floating point constant
-    n64     64-bit floating point constant
-    si      Strings table index, 32 bits unsigned
-    sci     Serialization Context object table index, 16 bits unsigned
-    csi     Callsite table index, 16 bits unsigned
+    int16   16-bit integer constant
+    int32   32-bit integer constant
+    int64   64-bit integer constant
+    num32   32-bit floating point constant
+    num64   64-bit floating point constant
+    uint16  16-bit unsigned integer constant
+    uint32  32-bit unsigned integer constant
+    uint64  64-bit unsigned integer constant
+    str     Strings table index, 32 bits unsigned
     ins     Instruction offset from frame start (for goto), 32 bits unsigned
 
 Note that this ensures we always keep at least 16-bit alignment for ops.
