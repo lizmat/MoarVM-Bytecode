@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.10  2024-04-24T13:32:46+02:00
     - Removed the "bytecode-offset" and "bytecode-length" attributes
       from the "Frame" class, and replaced these by a single "bytecode"
       attribute that will lazily produce a C<Buf> with the actual
