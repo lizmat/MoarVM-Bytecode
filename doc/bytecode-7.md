@@ -308,11 +308,7 @@ that has the `MVM_CALLSITE_ARG_NAMED` bit set.
 
 ## Bytecode segment
 This consists of a sequence of instructions. Instruction codes are always
-16 bits in length. The first 8 bits describe an instruction "bank", and the
-following 8 bits identify the instruction within that bank. Instruction banks
-0 through 127 are reserved for MoarVM core ops or future needs. Instruction
-banks 128 through 255 are mappable per compilation unit, and are used for
-"plug-in" ops.
+16 bits in length.
 
 Opcodes may be followed by zero or more operands. The instruction set will
 have the needed operands described by the following set of descriptors.
