@@ -335,6 +335,10 @@ The `Callsite` class provides these methods:
 
 The list of [Argument](Argument) objects for this callsite, if any.
 
+### bytes
+
+The number of bytes this callsite needs.
+
 ExtensionOp
 -----------
 
@@ -500,17 +504,11 @@ The annotation of this operation. Currently recognized annotations are:
 
 Absence of annotation if indicated by the empty string. See also [is-sequence](#is-sequence).
 
-head
-====
-
-adverbs
+### adverbs
 
 A `Map` of additional adverb strings.
 
-head
-====
-
-bytes
+### bytes
 
 ```raku
 my $bytes := $op.bytes || $op.bytes($frame, $offset);

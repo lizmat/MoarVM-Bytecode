@@ -390,6 +390,10 @@ The C<Callsite> class provides these methods:
 
 The list of L<Argument> objects for this callsite, if any.
 
+=head3 bytes
+
+The number of bytes this callsite needs.
+
 =head2 ExtensionOp
 
 The C<ExtensionOp> class provides these methods:
@@ -541,11 +545,11 @@ are:
 Absence of annotation if indicated by the empty string.  See also
 L<is-sequence|#is-sequence>.
 
-=head adverbs
+=head3 adverbs
 
 A C<Map> of additional adverb strings.
 
-=head bytes
+=head3 bytes
 
 =begin code :lang<raku>
 
