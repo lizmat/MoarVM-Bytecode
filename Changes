@@ -1,6 +1,13 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Add "sheap" helper script for string heap introspection
+    - Removed dependency on HexDump::Tiny, and replaced that by a
+      local, simplified way of showing a hexdump
+    - Added a MoarVM::Bytecode::Callsite.gist method
+    - Fixed issue in Callsite processing: flattened named args don't
+      have an index into the string heap
+    - Fixed issue opcode processing with rl() and wl() arguments
 
 0.0.10  2024-04-24T13:32:46+02:00
     - Removed the "bytecode-offset" and "bytecode-length" attributes

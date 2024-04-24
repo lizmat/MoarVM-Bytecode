@@ -67,9 +67,31 @@ my class MoarVM::Bytecode::Argument is Int {
 
 #- MoarVM::Bytecode::Callsite --------------------------------------------------
 my class MoarVM::Bytecode::Callsite {
-    has @.arguments;
+    has uint $.bytes;
+    has      @.arguments;
 
-    method bytes() { 2 * @!arguments }
+    multi method gist(MoarVM::Bytecode::Callsite:D:) {
+        @!arguments.map({
+            my str $type = .type.^name;
+            my str $name = .name;
+            my str @parts;
+
+            @parts.push($type) if $type ne 'Mu' && !.is-literal;
+            @parts.push($name
+              ?? ":$name"
+              !! .is-literal
+                ?? $type eq 'str'
+                  ?? "''"
+                  !! $type eq 'Mu'
+                    ?? 'O'
+                    !! 'N'
+                !! .is-flattened
+                  ?? '@'
+                  !! '$'
+            );
+            @parts.join(" ");
+        }).join(", ")
+    }
 }
 
 #- MoarVM::Bytecode::ExtensionOp -----------------------------------------------
@@ -533,7 +555,9 @@ class MoarVM::Bytecode {
             for ^$num-args {
                 my uint8 $flags = $bytecode.read-uint8($offset++);
                 @arguments.push: Argument.new($flags);
-                @nameds.push($_) if $flags +& MVM_CALLSITE_ARG_NAMED;
+                @nameds.push($_)
+                  if  $flags +& MVM_CALLSITE_ARG_NAMED
+                  && !($flags +& MVM_CALLSITE_ARG_FLAT);
             }
 
             ++$offset if $num-args +& 1;  # padding to 16bit boundary
@@ -544,7 +568,9 @@ class MoarVM::Bytecode {
                 $offset = $offset + 4;
             }
 
-            $callsites.push: Callsite.new(:@arguments);
+            my $bytes := 2 * $num-args + 4 * @nameds;
+
+            $callsites.push: Callsite.new(:@arguments, :$bytes);
         }
         $callsites.List
     }
@@ -616,15 +642,30 @@ class MoarVM::Bytecode {
         $!bytecode.subbuf($offset, $bytes)
     }
 
-    method hexdump(uint $offset, uint $bytes = 256) {
-        use HexDump::Tiny:ver<0.6>:auth<zef:raku-community-modules>;
-        hexdump(
-          $!bytecode.subbuf(
-            $offset +& 0x0fffffff0,
-            $bytes,
-            :skip(16 - ($offset +& 0x0f))
-          )
-        ).join("\n")
+    method hexdump(uint $start, uint $bytes = 256) {
+        my $bytecode := $!bytecode;
+        my uint $base = $start +& 0x0fffffff0;
+        my uint $last = $start + $bytes;
+
+        sub oneline(uint $offset is copy) {
+            my str @parts = $offset.fmt('%8x');
+
+            for ^16 {
+                @parts.push: $offset < $base || $offset >= $last
+                  ?? "  "
+                  !! $bytecode[$offset].fmt('%02x');
+                ++$offset;
+            }
+            @parts.join(" ")
+        }
+
+        my str @parts;
+        while $base < $last {
+            @parts.push: oneline($base);
+            $base += 16;
+        }
+
+        @parts.join("\n")
     }
 
     method rootdir() { $*EXECUTABLE.parent(3) }

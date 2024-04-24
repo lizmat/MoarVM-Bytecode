@@ -86,6 +86,24 @@ opinfo
 
 Helper script to show the gist of the given op name(s) or number(s).
 
+sheap
+-----
+
+    $ sheap e 3 4 5
+        3 SETTING::src/core.e/core_prologue.rakumod
+        4 language_revision_type
+        5 lang-meth-call
+
+    $ sheap e byte
+       42 byte
+     2844 bytecode-size
+
+Helper script for browsing the string heap of a given bytecode file (specified by either a setting letter, or a filename of a bytecode file).
+
+String arguments are interpreted as a key to do a .grep on the whole string heap. Numerical arguments are interpreted as indices into the string heap.
+
+Shown are the string index and the string.
+
 INSTANCE METHODS
 ================
 

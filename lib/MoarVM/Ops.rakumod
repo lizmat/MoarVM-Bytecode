@@ -2005,14 +2005,16 @@ class MoarVM::Op {
     sub calculate-bytes(@registers, &variable-handler = -> $ { return 0 }) {
         my uint $bytes = 2;
         for @registers {
-            $bytes = $bytes + (.starts-with('r')
-              || .starts-with('w')
+            $bytes = $bytes + (.starts-with('r(')
+              || .starts-with('w(')
               || .ends-with('8')
               || .ends-with('16')
               || $_ eq 'coderef'
               || $_ eq 'sslot'
               ?? 2
-              !! .ends-with('32')
+              !! .starts-with('rl(')
+                || .starts-with('wl(')
+                || .ends-with('32')
                 || $_ eq 'ins'
                 || $_ eq 'str'
                 ?? 4
@@ -2074,17 +2076,24 @@ class MoarVM::Op {
         }
     }
 
-    multi method gist(MoarVM::Op:D:) {
+    multi method gist(MoarVM::Op:D: :$verbose) {
         my str @parts = $!index.fmt('%3d');
 
-        @parts.push($!name);
+        @parts.push($!name.fmt('%-12s'));
         @parts.push($!registers.join(','))
           if $!registers.elems;
         @parts.push($!is-sequence ?? "[:$!annotation]" !! "[.$!annotation]")
           if $!annotation;
-        @parts.push: $!bytes ?? "($!bytes bytes)" !! "(variable length)";
+        @parts.push: $!bytes ?? "($!bytes bytes)" !! "(variable length)"
+          if $verbose;
 
         @parts.join(' ')
+    }
+    multi method gist(MoarVM::Op:D: Buf:D $bytecode) {
+        die "Improperly formatted bytecode"
+          if $bytecode.read-uint16(0, LittleEndian) != $!index;
+
+        ""
     }
 
     method all-adverbs() { @adverbs     }

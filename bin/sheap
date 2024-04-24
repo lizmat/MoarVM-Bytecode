@@ -1,0 +1,34 @@
+#- sheap ----------------------------------------------------------------------
+# CLI to look up the string in a bytcode string heap by number
+
+use MoarVM::Bytecode;
+
+my %*SUB-MAIN-OPTS = :coerce-allomorphs-to(Int);
+
+sub MAIN($file, *@indices) {
+    CATCH {
+        note .message;
+        exit 1;
+    }
+
+    my $M := MoarVM::Bytecode.new($file);
+    my @strings := $M.strings;
+    sub show($_) {
+        my $string := @strings[$_]
+          .subst(" ",  "␠", :g)
+          .subst("\n", "␤", :g);
+        say "$_.fmt('%5d') $string";
+    }
+
+    for @indices {
+        when Int {
+            show $_;
+        }
+        default {
+            my $target := $_;
+            show($_) for @strings.grep(*.contains($target), :k);
+        }
+    }
+}
+
+# vim: expandtab shiftwidth=4
