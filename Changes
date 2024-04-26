@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.13  2024-04-26T22:52:31+02:00
     - Rename "bytecode-offset" and "bytecode-length" methods
       on MoarVM::Bytecode class to "opcodes-offset" and
       "opcodes-length" respectively to prevent confusion
