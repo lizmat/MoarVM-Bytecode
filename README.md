@@ -73,6 +73,14 @@ Returns an `IO::Path` of the bytecode file of the given setting letter. Assumes 
 HELPER SCRIPTS
 ==============
 
+csites
+------
+
+    $ csites c 12
+     12 $, $, N
+
+Helper code to show the callsite info of the given callsite number.
+
 opinfo
 ------
 
@@ -155,6 +163,17 @@ say $M.hll-name;     # most likely "Raku"
 ```
 
 Returns the HLL language name for this bytecode. Most likely "Raku", or "nqp".
+
+op
+--
+
+```raku
+say $M.op(0x102);     #  102 istype       w(int64),r(obj),r(obj)
+
+say $M.op("istype");  #  102 istype       w(int64),r(obj),r(obj)
+```
+
+Attempt to create an opcode object for the given name or opcode number. Also includes any extension ops that may be defined in the bytecode itself.
 
 sc-dependencies
 ---------------
@@ -344,13 +363,29 @@ ExtensionOp
 
 The `ExtensionOp` class provides these methods:
 
+### adverbs
+
+Always an empty `Map`.
+
+### annotation
+
+Always the empty string.
+
+### bytes
+
+The number of bytes this opcode uses.
+
 ### name
 
-The name with which the extension op can be called
+The name with which the extension op can be called.
 
 ### descriptor
 
-An 8-byte `Buf` with descriptor information
+An 8-byte `Buf` with descriptor information.
+
+### is-sequence
+
+Always `False`.
 
 Frame
 -----

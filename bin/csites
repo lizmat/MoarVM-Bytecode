@@ -1,0 +1,28 @@
+#- csites ---------------------------------------------------------------------
+# CLI to look up callsite info in a bytecode by number
+
+use MoarVM::Bytecode;
+
+my %*SUB-MAIN-OPTS = :coerce-allomorphs-to(Int);
+
+sub MAIN($file, *@indices) {
+    CATCH {
+        note .message;
+        exit 1;
+    }
+
+    my $M := MoarVM::Bytecode.new($file);
+    my @callsites := $M.callsites;
+    sub show($_) {
+        my $callsite := @callsites[$_];
+        say "$_.fmt('%3d') $callsite.gist()";
+    }
+
+    for @indices {
+        when Int {
+            show $_;
+        }
+    }
+}
+
+# vim: expandtab shiftwidth=4

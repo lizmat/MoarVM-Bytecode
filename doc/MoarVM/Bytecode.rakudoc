@@ -81,6 +81,17 @@ Assumes the currently lowest supported setting by default.
 
 =head1 HELPER SCRIPTS
 
+=head2 csites
+
+=begin code
+
+$ csites c 12
+ 12 $, $, N
+
+=end code
+
+Helper code to show the callsite info of the given callsite number.
+
 =head2 opinfo
 
 =begin code
@@ -183,6 +194,20 @@ say $M.hll-name;     # most likely "Raku"
 
 Returns the HLL language name for this bytecode.  Most likely "Raku", or
 "nqp".
+
+=head2 op
+
+=begin code :lang<raku>
+
+say $M.op(0x102);     #  102 istype       w(int64),r(obj),r(obj)
+
+say $M.op("istype");  #  102 istype       w(int64),r(obj),r(obj) 
+
+=end code
+
+Attempt to create an opcode object for the given name or opcode number.
+Also includes any extension ops that may be defined in the bytecode
+itself.
 
 =head2 sc-dependencies
 
@@ -398,13 +423,29 @@ The number of bytes this callsite needs.
 
 The C<ExtensionOp> class provides these methods:
 
+=head3 adverbs
+
+Always an empty C<Map>.
+
+=head3 annotation
+
+Always the empty string.
+
+=head3 bytes
+
+The number of bytes this opcode uses.
+
 =head3 name
 
-The name with which the extension op can be called
+The name with which the extension op can be called.
 
 =head3 descriptor
 
-An 8-byte C<Buf> with descriptor information
+An 8-byte C<Buf> with descriptor information.
+
+=head3 is-sequence
+
+Always C<False>.
 
 =head2 Frame
 

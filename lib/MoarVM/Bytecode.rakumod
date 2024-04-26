@@ -9,7 +9,10 @@ my constant @localtype = <
   10     11   12    13    14    15    16    uint8  uint16 uint32
   uint64
 >;
-my constant LE = LittleEndian;
+my constant LE     = LittleEndian;        # make shorter lines
+my constant MAGIC  = 724320148219055949;  # "MOARVM\r\n" as a 64bit uint
+my constant IDMAX  = 10240;               # max offset for MAGIC finding
+my constant EXTOPS = 1024;                # opcode # of first extension op
 
 # From src/core/callsite.h
 my constant MVM_CALLSITE_ARG_OBJ     =   1; # object
@@ -96,12 +99,21 @@ my class MoarVM::Bytecode::Callsite {
 
 #- MoarVM::Bytecode::ExtensionOp -----------------------------------------------
 my class MoarVM::Bytecode::ExtensionOp {
-    has str $.name;
-    has Buf $.descriptor;
+    has str  $.name;
+    has uint $.index;
+    has uint $.bytes;
+    has Buf  $.descriptor;
 
-    multi method gist(MoarVM::Bytecode::ExtensionOp:D:) {
-        "$!name.fmt('%-16s') ($!descriptor.gist.substr(14, *-1))"
+    multi method gist(MoarVM::Bytecode::ExtensionOp:D: :$verbose) {
+        my str @parts = $!index.fmt('%4x'), $!name.fmt('%-12s');
+
+        @parts.push: "($!bytes bytes)" if $verbose;
+        @parts.join(' ')
     }
+
+    method annotation( --> ""   ) {               }
+    method is-dequence(--> False) {               }
+    method adverbs(             ) { BEGIN Map.new }
 }
 
 #- MoarVM::Bytecode::Frame -----------------------------------------------------
@@ -474,6 +486,7 @@ class MoarVM::Bytecode {
     has         @.extension-ops   is built(False);
     has Frames  $.frames          is built(False);
     has         @.callsites       is built(False);
+    has         @.cu-dependencies is built(False);
 
     # Object setup
     multi method new(Str:D $path is copy) {
@@ -490,9 +503,20 @@ class MoarVM::Bytecode {
     method TWEAK() {
         my $bytecode := $!bytecode;
 
-        my $magic := $bytecode[^8].chrs;
-        die Q|Unsupported magic string: expected "MOARVM\r\n" but got | ~ $magic
-          unless $magic eq "MOARVM\r\n";
+        # Search for the magic string.  In precompiled modules, the actual
+        # MoarVM bytecode is prefixed with a number of lines of compunit
+        # dependencies, followed by an empty line before the magic string
+        my uint $offset = -1;
+        my uint $max = IDMAX min $bytecode.elems - 8;
+        Nil while ++$offset < $max && $bytecode.read-uint64($offset) != MAGIC;
+
+        if $offset == $max {
+            fail Q|Magic string "MOARVM\r\n" not found|;
+        }
+        elsif $offset {
+            @!cu-dependencies := self!make-cu-dependencies($offset);
+            $!bytecode := $bytecode.subbuf($offset);
+        }
 
         my $version := self.version;
         die Q|Unsupported bytecode version: expected 7 but got | ~ $version
@@ -506,6 +530,12 @@ class MoarVM::Bytecode {
     }
 
     # Helper methods for creating object, mostly for readability
+    method !make-cu-dependencies(uint $offset) {
+        $!bytecode.subbuf(0, $offset).decode.lines.head(*-1).map({
+            $_ # XXX proper object
+        }).List
+    }
+
     method !make-sc-dependencies() {
         my $bytecode        := $!bytecode;
         my $strings         := $!strings;
@@ -526,14 +556,19 @@ class MoarVM::Bytecode {
         my $strings       := $!strings;
         my $extension-ops := IterationBuffer.new;
 
-        my $offset = self.extension-ops-offset;
-        my $last   = $offset + (self.extension-ops-entries * 12);
+        my $offset     = self.extension-ops-offset;
+        my $last       = $offset + (self.extension-ops-entries * 12);
+        my uint $index = EXTOPS;
         while $offset < $last {
+            my $name       := $strings[$bytecode.read-uint32($offset, LE)];
+            my $descriptor := $bytecode.subbuf($offset + 4, 8);
+            my $bytes := 2 + 2 * $descriptor.grep(* > 0).elems;
+
             $extension-ops.push: ExtensionOp.new(
-              :name($strings[$bytecode.read-uint32($offset, LE)]),
-              :descriptor($bytecode.subbuf($offset + 4, 8))
+              :$name, :$index, :$bytes, :$descriptor
             );
             $offset = $offset + 12;
+            ++$index;
         }
         $extension-ops.List
     }
@@ -568,7 +603,7 @@ class MoarVM::Bytecode {
                 $offset = $offset + 4;
             }
 
-            my $bytes := 2 * $num-args + 4 * @nameds;
+            my $bytes := 2 * $num-args; # + (@nameds > 1 && 4 * @nameds);
 
             $callsites.push: Callsite.new(:@arguments, :$bytes);
         }
@@ -601,6 +636,17 @@ class MoarVM::Bytecode {
     method deserialization-frame-index() { self.uint32(88) }
 
     # Utility methods
+    multi method op(Int:D $index) {
+        MoarVM::Op.new($index)
+          // $index >= EXTOPS && @!extension-ops[$index - EXTOPS]
+          // "No op known at index $index".Failure
+    }
+    multi method op(Str:D $name) {
+        MoarVM::Op.new($name)
+          // @!extension-ops.first(*.name eq $name)
+          // "No op known with name '$name'".Failure
+    }
+
     method uint16(uint $offset) {
         $!bytecode.read-uint16($offset, LittleEndian)
     }
@@ -642,8 +688,7 @@ class MoarVM::Bytecode {
         $!bytecode.subbuf($offset, $bytes)
     }
 
-    method hexdump(uint $start, uint $bytes = 256) {
-        my $bytecode := $!bytecode;
+    my sub dumphex(Buf:D $bytecode, uint $start, uint $bytes) {
         my uint $base = $start +& 0x0fffffff0;
         my uint $last = $start + $bytes;
 
@@ -651,7 +696,7 @@ class MoarVM::Bytecode {
             my str @parts = $offset.fmt('%8x');
 
             for ^16 {
-                @parts.push: $offset < $base || $offset >= $last
+                @parts.push: ($offset < $start || $offset >= $last)
                   ?? "  "
                   !! $bytecode[$offset].fmt('%02x');
                 ++$offset;
@@ -660,12 +705,22 @@ class MoarVM::Bytecode {
         }
 
         my str @parts;
-        while $base < $last {
-            @parts.push: oneline($base);
-            $base += 16;
+        my uint $offset = $base;
+        while $offset < $last {
+            @parts.push: oneline($offset);
+            $offset += 16;
         }
 
         @parts.join("\n")
+    }
+
+    multi method hexdump(Int:D $offset, Int:D $bytes = 256) {
+        dumphex($!bytecode, $offset, $bytes)
+    }
+    multi method hexdump(
+      Buf:D $bytecode, Int:D $offset = 0; Int:D $bytes = 256
+    ) {
+        dumphex($bytecode, $offset, $bytes)
     }
 
     method rootdir() { $*EXECUTABLE.parent(3) }

@@ -10,7 +10,7 @@ sub MAIN(*@ops) {
         note .message;
         exit 1;
     }
-    say MoarVM::Op.new($_) for @ops;;
+    say MoarVM::Op.new($_).gist(:verbose) for @ops;
 }
 
 # vim: expandtab shiftwidth=4

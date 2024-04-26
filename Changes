@@ -1,6 +1,17 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Add "csites" helper script to introspect callsites
+    - Add MoarVM::Bytecode.op method that will also attempt to
+      look up any extension opcodes that may be defined in that
+      bytecode
+    - Give MoarVM::Bytecode::ExtensionOp the same API as
+      MoarVM::Op, so they can be used transparently
+    - Allow support for reading module precomp files, as
+      opposed to just pure MoarVM bytecode files
+    - Add "cu-dependencies" attribute that lists any compunit
+      dependencies in module precomp files.
+    - Fix various issues in decompilation and hexdump
 
 0.0.11  2024-04-24T21:54:18+02:00
     - Add "sheap" helper script for string heap introspection

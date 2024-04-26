@@ -1,12 +1,16 @@
 use Test;
 use MoarVM::Bytecode;
 
-plan 13;
+plan 16;
 
 my str $setting = "c";
 my $M := MoarVM::Bytecode.new($setting);
 is $M.version,   7,     "Is it the correct version";
 is $M.hll-name, "Raku", "Is it the correct HLL";
+is $M.cu-dependencies.elems, 0, 'No compunit dependencies';
+
+ok $M.op("unless_i"),    "can we obtain normal ops";
+ok $M.op("p6stateinit"), "can we obtain extension ops";
 
 my @frames := $M.frames.reify-all;
 is @frames.elems, $M.frames.elems, "did we get all frames";

@@ -1997,7 +1997,6 @@ class MoarVM::Op {
         @reified-ops[$index]
     }
 
-
     # The number of bytes an opcode takes *can* be dependent on the
     # callsite, so can only be reliably calculated if the frame's
     # callsites are also supplied.  As we don't have that here and
@@ -2077,9 +2076,8 @@ class MoarVM::Op {
     }
 
     multi method gist(MoarVM::Op:D: :$verbose) {
-        my str @parts = $!index.fmt('%3d');
+        my str @parts = $!index.fmt('%4x'), $!name.fmt('%-12s');
 
-        @parts.push($!name.fmt('%-12s'));
         @parts.push($!registers.join(','))
           if $!registers.elems;
         @parts.push($!is-sequence ?? "[:$!annotation]" !! "[.$!annotation]")
