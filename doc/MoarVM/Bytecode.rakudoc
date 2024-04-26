@@ -145,16 +145,9 @@ Shown are the string index and the string.
 Returns a list of L<Callsite|#Callsite> objects, which contains
 information about the arguments at a given callsite.
 
-=head2 extension-ops
+=head3 de-compile
 
-=begin code :lang<raku>
-
-.say for $M.extension-ops;  # show all extension ops
-
-=end code
-
-Returns a list of NQP extension operators that have been added to this
-bytecode.  Each element consists of an L<ExtensionOp> object.
+Returns a string with the opcodes and their arguments.
 
 =head2 extension-ops
 
@@ -208,6 +201,10 @@ say $M.op("istype");  #  102 istype       w(int64),r(obj),r(obj)
 Attempt to create an opcode object for the given name or opcode number.
 Also includes any extension ops that may be defined in the bytecode
 itself.
+
+=head2 opcodes
+
+A C<Buf> with the actual opcodes.
 
 =head2 sc-dependencies
 
@@ -362,7 +359,7 @@ C<frames-data-offset>,     C<frames-data-entries>,
 C<callsites-data-offset>,  C<callsites-data-entries>,
 C<string-heap-offset>,     C<string-heap-entries>,
 C<sc-data-offset>,         C<sc-data-length>,
-C<bytecode-offset>,        C<bytecode-length>,
+C<opcodes-offset>,         C<opcodes-length>,
 C<annotation-data-offset>, C<annotation-data-length>,
 C<main-entry-frame-index>,
 C<library-load-frame-index>,
@@ -451,13 +448,13 @@ Always C<False>.
 
 The C<Frame> class provides these methods:
 
-=head3 bytecode
-
-A C<Buf> with the actual bytecode of this frame.
-
 =head3 cuuid
 
 A string representing the compilation unit ID.
+
+=head3 de-compile
+
+Returns a string with the opcodes and their arguments of this frame.
 
 =head3 flags
 
@@ -470,6 +467,10 @@ A list of L<Handler|#Handler> objects, representing the handlers in this frame.
 =head3 has-exit-handler
 
 1 if this frame has an exit handler, otherwise 0.
+
+=head3 hexdump
+
+Return a hexdump of the opcodes of this frame.
 
 =head3 index
 
@@ -494,6 +495,10 @@ The name of this frame, if any.
 =head3 no-outer
 
 1 if this frame has no outer, otherwise 0.
+
+=head3 opcodes
+
+A C<Buf> with the actual bytecode of this frame.
 
 =head3 outer-index
 
@@ -560,7 +565,7 @@ The line number of this statement.
 
 =head3 offset
 
-The bytecode offset of this statement.
+The opcode offset of this statement.
 
 =head2 Op
 
@@ -603,7 +608,7 @@ op has a variable size.
 
 Some ops have a variable size depending on the callsite in the frame
 it is residing.  For those cases, one can call the C<bytes> method
-with the L<Frame|#Frame> object and the offset in the bytecode of
+with the L<Frame|#Frame> object and the offset in the opcodes of
 that frame to obtain the number of bytes for that instance.
 
 =head3 index

@@ -2067,10 +2067,10 @@ class MoarVM::Op {
     }
 
     multi method bytes(MoarVM::Op:D:) { $!bytes }
-    multi method bytes(MoarVM::Op:D: $frame, Int:D $offset) {
+    multi method bytes(MoarVM::Op:D: $source, Int:D $offset) {
         calculate-bytes $!registers, -> $bytes {
-            2 + $frame.callsites[
-              $frame.bytecode.read-uint16($offset + $bytes, LittleEndian)
+            2 + $source.callsites[
+              $source.opcodes.read-uint16($offset + $bytes, LittleEndian)
             ].bytes
         }
     }

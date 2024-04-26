@@ -1,6 +1,19 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Rename "bytecode-offset" and "bytecode-length" methods
+      on MoarVM::Bytecode class to "opcodes-offset" and
+      "opcodes-length" respectively to prevent confusion
+    - Rename "bytecode" method on MoarVM::Bytecode::Frame and
+      MoarVM::Bytecode to "opcodes" to prevent confusion
+    - Make MoarVM::Bytecode and MoarVM::Bytecode::Frame Iterable,
+      producing the opcodes when iterated over
+    - Add MoarVM::Bytecode::Frame.de-compile method that produces
+      a string with all opcodes de-compiled
+    - Add the "M" attribute to MoarVM::Bytecode::Frame, to hook
+      the frame back to the actual bytecode object it lives in
+    - Removed "callsites" attribute from MoarVM::Bytecode::Frame:
+      it is now being handled by "M"
 
 0.0.12  2024-04-26T15:58:56+02:00
     - Add "csites" helper script to introspect callsites

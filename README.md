@@ -124,14 +124,9 @@ callsites
 
 Returns a list of [Callsite](#Callsite) objects, which contains information about the arguments at a given callsite.
 
-extension-ops
--------------
+### de-compile
 
-```raku
-.say for $M.extension-ops;  # show all extension ops
-```
-
-Returns a list of NQP extension operators that have been added to this bytecode. Each element consists of an [ExtensionOp](ExtensionOp) object.
+Returns a string with the opcodes and their arguments.
 
 extension-ops
 -------------
@@ -174,6 +169,11 @@ say $M.op("istype");  #  102 istype       w(int64),r(obj),r(obj)
 ```
 
 Attempt to create an opcode object for the given name or opcode number. Also includes any extension ops that may be defined in the bytecode itself.
+
+opcodes
+-------
+
+A `Buf` with the actual opcodes.
 
 sc-dependencies
 ---------------
@@ -297,7 +297,7 @@ HEADER SHORTCUTS
 
 The following methods provide shortcuts to the values in the bytecode header. They are explained in the [MoarVM documentation](https://github.com/MoarVM/MoarVM/blob/main/docs/bytecode.markdown#bytecode).
 
-`sc-dependencies-offset`, `sc-dependencies-entries`, `extension-ops-offset`, `extension-ops-entries`, `frames-data-offset`, `frames-data-entries`, `callsites-data-offset`, `callsites-data-entries`, `string-heap-offset`, `string-heap-entries`, `sc-data-offset`, `sc-data-length`, `bytecode-offset`, `bytecode-length`, `annotation-data-offset`, `annotation-data-length`, `main-entry-frame-index`, `library-load-frame-index`, `deserialization-frame-index`
+`sc-dependencies-offset`, `sc-dependencies-entries`, `extension-ops-offset`, `extension-ops-entries`, `frames-data-offset`, `frames-data-entries`, `callsites-data-offset`, `callsites-data-entries`, `string-heap-offset`, `string-heap-entries`, `sc-data-offset`, `sc-data-length`, `opcodes-offset`, `opcodes-length`, `annotation-data-offset`, `annotation-data-length`, `main-entry-frame-index`, `library-load-frame-index`, `deserialization-frame-index`
 
 SUBCLASSES
 ==========
@@ -392,13 +392,13 @@ Frame
 
 The `Frame` class provides these methods:
 
-### bytecode
-
-A `Buf` with the actual bytecode of this frame.
-
 ### cuuid
 
 A string representing the compilation unit ID.
+
+### de-compile
+
+Returns a string with the opcodes and their arguments of this frame.
 
 ### flags
 
@@ -411,6 +411,10 @@ A list of [Handler](#Handler) objects, representing the handlers in this frame.
 ### has-exit-handler
 
 1 if this frame has an exit handler, otherwise 0.
+
+### hexdump
+
+Return a hexdump of the opcodes of this frame.
 
 ### index
 
@@ -435,6 +439,10 @@ The name of this frame, if any.
 ### no-outer
 
 1 if this frame has no outer, otherwise 0.
+
+### opcodes
+
+A `Buf` with the actual bytecode of this frame.
 
 ### outer-index
 
@@ -510,7 +518,7 @@ The line number of this statement.
 
 ### offset
 
-The bytecode offset of this statement.
+The opcode offset of this statement.
 
 Op
 --
@@ -551,7 +559,7 @@ my $bytes := $op.bytes || $op.bytes($frame, $offset);
 
 The number of bytes this op occupies in memory. Returns **0** if the op has a variable size.
 
-Some ops have a variable size depending on the callsite in the frame it is residing. For those cases, one can call the `bytes` method with the [Frame](#Frame) object and the offset in the bytecode of that frame to obtain the number of bytes for that instance.
+Some ops have a variable size depending on the callsite in the frame it is residing. For those cases, one can call the `bytes` method with the [Frame](#Frame) object and the offset in the opcodes of that frame to obtain the number of bytes for that instance.
 
 ### index
 

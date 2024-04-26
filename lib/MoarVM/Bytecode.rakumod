@@ -24,6 +24,66 @@ my constant MVM_CALLSITE_ARG_NAMED   =  32; # named argument
 my constant MVM_CALLSITE_ARG_FLAT    =  64; # flattened argument
 my constant MVM_CALLSITE_ARG_UINT    = 128; # native integer, unsigned
 
+#- general helper subs ---------------------------------------------------------
+my sub dumphex(Buf:D $blob, uint $start, uint $bytes) {
+    my uint $base = $start +& 0x0fffffff0;
+    my uint $last = $start + $bytes;
+
+    sub oneline(uint $offset is copy) {
+        my str @parts = $offset.fmt('%8x');
+
+        for ^16 {
+            @parts.push: ($offset < $start || $offset >= $last)
+              ?? "  "
+              !! $blob[$offset].fmt('%02x');
+            ++$offset;
+        }
+        @parts.join(" ")
+    }
+
+    my str @parts;
+    my uint $offset = $base;
+    while $offset < $last {
+        @parts.push: oneline($offset);
+        $offset += 16;
+    }
+
+    @parts.join("\n")
+}
+
+#-  MoarVM::Bytecode::Iterator -------------------------------------------------
+my class MoarVM::Bytecode::Iterator does Iterator {
+    has      $!source is built(:bind);
+    has      $!opcodes;
+    has uint $!elems;
+    has uint $!offset;
+
+    method TWEAK() {
+        $!opcodes := $!source.opcodes;
+        $!elems    = $!opcodes.elems;
+    }
+
+    method pull-one() {
+        my uint $offset = $!offset;
+
+        if $offset < $!elems {
+            my $source := $!source;
+            my $op := $source.op($!opcodes.read-uint16($offset, LE));
+            with $op {
+                $!offset = $offset
+                  + ($op.bytes || $op.bytes($source, $offset));
+            }
+            else {
+                $!offset = $!elems;
+            }
+            $op
+        }
+        else {
+            IterationEnd
+        }
+    }
+}
+
 #- MoarVM::Bytecode::Filename --------------------------------------------------
 # Role to mixin name for objects that sometimes have a filename
 my role MoarVM::Bytecode::Filename {
@@ -117,19 +177,19 @@ my class MoarVM::Bytecode::ExtensionOp {
 }
 
 #- MoarVM::Bytecode::Frame -----------------------------------------------------
-my class MoarVM::Bytecode::Frame {
+my class MoarVM::Bytecode::Frame does Iterable {
+    has        $.M handles <callsites op>;
     has uint32 $.index;
     has str    $.cuuid;
     has uint16 $.outer-index;
     has uint16 $.flags;
     has uint32 $.sc-dependency-index;
     has uint32 $.sc-object-index;
-    has        $.bytecode   is built(:bind);
+    has        $.opcodes    is built(:bind);
     has        @.statements is built(:bind);
     has        @.locals     is built(:bind);
     has        @.lexicals   is built(:bind);
     has        @.handlers   is built(:bind);
-    has        @.callsites  is built(:bind);
 
     method name(    --> "") { }
     method filename(--> "") { }
@@ -138,10 +198,21 @@ my class MoarVM::Bytecode::Frame {
     method has-exit-handler() { $!flags +& 1             }
     method is-thunk()         { $!flags +& 2 && 1        }
 
-    method bytecode() {
-        $!bytecode ~~ Callable
-          ?? ($!bytecode := $!bytecode())
-          !! $!bytecode
+    method opcodes() {
+        $!opcodes ~~ Callable
+          ?? ($!opcodes := $!opcodes())
+          !! $!opcodes
+    }
+
+    method iterator() { MoarVM::Bytecode::Iterator.new(:source(self)) }
+
+    method hexdump() {
+       my $opcodes := self.opcodes;
+       dumphex($opcodes, 0, $opcodes.elems)
+    }
+
+    method de-compile(:$verbose) {
+        self.map(*.gist(:$verbose)).join("\n")
     }
 
     multi method gist(MoarVM::Bytecode::Frame:D:) {
@@ -162,7 +233,8 @@ my class MoarVM::Bytecode::Frame {
         @parts.push: "has-exit-handler" if self.has-exit-handler;
         @parts.push: "is-thunk"         if self.is-thunk;
 
-        @parts.push: "(@!statements.elems() stmts, $.bytecode.elems() bytes)";
+        @parts.push: "$.opcodes.elems() bytes";
+        @parts.push: "@!statements.elems() stmts" if @!statements.elems > 0;
 
         @parts.join(" ");
     }
@@ -348,8 +420,8 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         my $bc := $M.bytecode;
         my $st := $M.strings;
 
-        my $bytecode-offset := $M.bytecode-offset + $bc.read-uint32($offset,LE);
-        my $bytecode-length := $bc.read-uint32($offset +  4, LE);
+        my $opcodes-offset := $M.opcodes-offset + $bc.read-uint32($offset,LE);
+        my $opcodes-length := $bc.read-uint32($offset +  4, LE);
 
         my $num-locals                :=     $bc.read-uint32($offset +  8, LE);
         my $num-lexicals              :=     $bc.read-uint32($offset + 12, LE);
@@ -445,14 +517,14 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         @locals   := @locals.map(  {MoarVM::Bytecode::Local.new(  |$_)}).List;
         @lexicals := @lexicals.map({MoarVM::Bytecode::Lexical.new(|$_)}).List;
 
-        my $bytecode  := { $bc.subbuf($bytecode-offset, $bytecode-length) }
-        my @callsites := $M.callsites;
+        my $opcodes  := { $bc.subbuf($opcodes-offset, $opcodes-length) }
 
         my $frame := MoarVM::Bytecode::Frame.new(
-          :$index, :$bytecode, :$num-locals, :$num-lexicals, :$num-handlers,
+          :$M, :$index, :$opcodes,
+          :$num-locals, :$num-lexicals, :$num-handlers,
           :$cuuid, :$outer-index, :$flags,
           :$sc-dependency-index, :$sc-object-index,
-          :@statements, :@handlers, :@locals, :@lexicals, :@callsites
+          :@statements, :@handlers, :@locals, :@lexicals
         );
 
         $frame := $frame but MoarVM::Bytecode::Name(    $name    ) if $name;
@@ -478,7 +550,7 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
 }
 
 #- MoarVM::Bytecode ------------------------------------------------------------
-class MoarVM::Bytecode {
+class MoarVM::Bytecode does Iterable {
     has str     $.path;
     has Buf     $.bytecode;
     has Strings $.strings         is built(False);
@@ -626,8 +698,8 @@ class MoarVM::Bytecode {
     method string-heap-entries()     { self.uint32(48) }
     method sc-data-offset()          { self.uint32(52) }
     method sc-data-length()          { self.uint32(56) }
-    method bytecode-offset()         { self.uint32(60) }
-    method bytecode-length()         { self.uint32(64) }
+    method opcodes-offset()          { self.uint32(60) }
+    method opcodes-length()          { self.uint32(64) }
     method annotation-data-offset()  { self.uint32(68) }
     method annotation-data-length()  { self.uint32(72) }
 
@@ -635,7 +707,7 @@ class MoarVM::Bytecode {
     method library-load-frame-index()    { self.uint32(84) }
     method deserialization-frame-index() { self.uint32(88) }
 
-    # Utility methods
+    # Introspection methods
     multi method op(Int:D $index) {
         MoarVM::Op.new($index)
           // $index >= EXTOPS && @!extension-ops[$index - EXTOPS]
@@ -647,34 +719,36 @@ class MoarVM::Bytecode {
           // "No op known with name '$name'".Failure
     }
 
-    method uint16(uint $offset) {
-        $!bytecode.read-uint16($offset, LittleEndian)
+    method iterator() { MoarVM::Bytecode::Iterator.new(:source(self)) }
+
+    method de-compile(:$verbose) {
+        self.map(*.gist(:$verbose)).join("\n")
     }
+    # Utility methods
+    method uint16(uint $offset) { $!bytecode.read-uint16($offset, LE) }
     method uint16s(uint $offset is copy, uint $entries = 16) {
         my $bytecode := $!bytecode;
         my uint16 @values;
         for ^$entries {
-            @values.push: $bytecode.read-uint16($offset, LittleEndian);
+            @values.push: $bytecode.read-uint16($offset, LE);
             $offset = $offset + 2;
         }
         @values
     }
 
-    method uint32(uint $offset) {
-        $!bytecode.read-uint32($offset, LittleEndian)
-    }
+    method uint32(uint $offset) { $!bytecode.read-uint32($offset, LE) }
     method uint32s(uint $offset is copy, uint $entries = 16) {
         my $bytecode := $!bytecode;
         my uint32 @values;
         for ^$entries {
-            @values.push: $bytecode.read-uint32($offset, LittleEndian);
+            @values.push: $bytecode.read-uint32($offset, LE);
             $offset = $offset + 4;
         }
         @values
     }
 
     method str(uint $offset) {
-        $!strings[$!bytecode.read-uint32($offset, LittleEndian)]
+        $!strings[$!bytecode.read-uint32($offset, LE)]
     }
 
     method slice(uint $offset, uint $bytes = 256) {
@@ -688,30 +762,8 @@ class MoarVM::Bytecode {
         $!bytecode.subbuf($offset, $bytes)
     }
 
-    my sub dumphex(Buf:D $bytecode, uint $start, uint $bytes) {
-        my uint $base = $start +& 0x0fffffff0;
-        my uint $last = $start + $bytes;
-
-        sub oneline(uint $offset is copy) {
-            my str @parts = $offset.fmt('%8x');
-
-            for ^16 {
-                @parts.push: ($offset < $start || $offset >= $last)
-                  ?? "  "
-                  !! $bytecode[$offset].fmt('%02x');
-                ++$offset;
-            }
-            @parts.join(" ")
-        }
-
-        my str @parts;
-        my uint $offset = $base;
-        while $offset < $last {
-            @parts.push: oneline($offset);
-            $offset += 16;
-        }
-
-        @parts.join("\n")
+    method opcodes() {
+        $!bytecode.subbuf(self.opcodes-offset, self.opcodes-length)
     }
 
     multi method hexdump(Int:D $offset, Int:D $bytes = 256) {
