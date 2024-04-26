@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.12  2024-04-26T15:58:56+02:00
     - Add "csites" helper script to introspect callsites
     - Add MoarVM::Bytecode.op method that will also attempt to
       look up any extension opcodes that may be defined in that
