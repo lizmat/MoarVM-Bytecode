@@ -1,5 +1,19 @@
 # An attempt at providing introspection into the MoarVM bytecode format
 
+use v6.e.PREVIEW;  # We use new Format support
+
+# Faster formatted values!
+my &formatx   := Format.new('%x');
+my &format4x  := Format.new('%4x');
+my &format8d  := Format.new('%8d');
+my &format12s := Format.new('%-12s');
+
+# Even faster '%02x' formatting
+my str @lookup = <0 1 2 3 4 5 6 7 8 9 a b c d e f>;
+my sub format02x(uint8 $value) {
+    @lookup[$value +> 4] ~ @lookup[$value +& 0x0f]
+}
+
 use MoarVM::Ops;
 use List::Agnostic:ver<0.0.1>:auth<zef:lizmat>;
 use paths:ver<10.0.9>:auth<zef:lizmat>;
@@ -29,13 +43,15 @@ my sub dumphex(Buf:D $blob, uint $start, uint $bytes) {
     my uint $base = $start +& 0x0fffffff0;
     my uint $last = $start + $bytes;
 
+    my &format-offset := Format.new('%' ~ formatx($last).chars ~ 'x');
+
     sub oneline(uint $offset is copy) {
-        my str @parts = $offset.fmt('%8x');
+        my str @parts = format-offset($offset), "";
 
         for ^16 {
             @parts.push: ($offset < $start || $offset >= $last)
               ?? "  "
-              !! $blob[$offset].fmt('%02x');
+              !! format02x($blob[$offset]);
             ++$offset;
         }
         @parts.join(" ")
@@ -69,12 +85,11 @@ my class MoarVM::Bytecode::Iterator does Iterator {
         if $offset < $!elems {
             my $source := $!source;
             my $op := $source.op($!opcodes.read-uint16($offset, LE));
-            with $op {
-                $!offset = $offset
-                  + ($op.bytes || $op.bytes($source, $offset));
+            if $op ~~ Failure {
+                $!offset = $!elems;
             }
             else {
-                $!offset = $!elems;
+                $!offset = $offset + $op.bytes($source, $offset);
             }
             $op
         }
@@ -165,15 +180,17 @@ my class MoarVM::Bytecode::ExtensionOp {
     has Buf  $.descriptor;
 
     multi method gist(MoarVM::Bytecode::ExtensionOp:D: :$verbose) {
-        my str @parts = $!index.fmt('%4x'), $!name.fmt('%-12s');
+        my str @parts = format4x($!index), format12s($!name);
 
         @parts.push: "($!bytes bytes)" if $verbose;
         @parts.join(' ')
     }
 
-    method annotation( --> ""   ) {               }
-    method is-dequence(--> False) {               }
     method adverbs(             ) { BEGIN Map.new }
+    method annotation( --> ""   ) {               }
+    method bytes($, $           ) { $!bytes       }
+    method is-dequence(--> False) {               }
+    method operands(            ) { ()            } # XXX for now
 }
 
 #- MoarVM::Bytecode::Frame -----------------------------------------------------
@@ -215,14 +232,14 @@ my class MoarVM::Bytecode::Frame does Iterable {
         self.map(*.gist(:$verbose)).join("\n")
     }
 
-    multi method gist(MoarVM::Bytecode::Frame:D:) {
-        my str @parts = $!cuuid.fmt("%4d");
+    multi method gist(MoarVM::Bytecode::Frame:D: :$verbose) {
+        my str @parts = format4x($!cuuid);
 
         if self.filename -> $filename is copy {
-            $filename = $filename.split("/").tail;
-            @parts.push: @!statements
-              ?? "$filename:@!statements.head.line()"
-              !! $filename;
+            my str $line = @!statements ?? ":@!statements.head.line()" !! "";
+            @parts.push: $verbose
+              ?? "$filename, line $line\n    "
+              !! "$filename.split("/").tail()$line";
 
             if self.name -> $name {
                 @parts.push: qq/"$name"/;
@@ -296,24 +313,26 @@ my class MoarVM::Bytecode::Strings does List::Agnostic {
     has        $!M       is built;
     has uint32 @!offsets is built;
     has uint   $.elems;
+    has uint   $.bytes;
 
     my int @extra = 4, 7, 6, 5;
 
     method new($M) {
         my uint32 @offsets;
 
-        my int $offset = $M.string-heap-offset;
-        my int $elems  = $M.string-heap-entries;
-        my int $i;
+        my uint $start  = $M.string-heap-offset;
+        my uint $offset = $start;
+        my uint $elems  = $M.string-heap-entries;
+        my uint $i;
         while $i < $elems {
             @offsets.push: $offset;
 
-            my int $bytes = $M.uint32($offset) +> 1;
+            my uint $bytes = $M.uint32($offset) +> 1;
             $offset = $offset + $bytes + @extra[$bytes +& 0x03];
             ++$i;
         }
 
-        self.bless(:$M, :@offsets, :$elems)
+        self.bless(:$M, :@offsets, :$elems, :bytes($offset - $start))
     }
 
     method AT-POS(Int:D $pos) {
@@ -330,7 +349,7 @@ my class MoarVM::Bytecode::Strings does List::Agnostic {
     }
 
     method gist(MoarVM::Bytecode::Strings:D:) {
-        "String Heap: $!elems different strings"
+        "String Heap: $!elems different strings, $!bytes bytes"
     }
 }
 
@@ -340,6 +359,7 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
     has      $!M      is built;
     has      @!frames is built;
     has uint $.elems;
+    has uint $.bytes;
     has uint $.total-locals;
     has uint $.total-lexicals;
     has uint $.total-handlers;
@@ -356,9 +376,10 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         my uint $total-lexical-values;
         my uint $total-local-debug-names;
 
-        my int $offset = $M.frames-data-offset;
-        my int $elems  = $M.frames-data-entries;
-        my int $i;
+        my uint $start  = $M.frames-data-offset;
+        my uint $offset = $start;
+        my uint $elems  = $M.frames-data-entries;
+        my uint $i;
         while $i < $elems {
             @frames.push: $offset;
 
@@ -390,8 +411,9 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         }
 
         self.bless(
-          :$M, :@frames, :$elems, :$total-locals, :$total-lexicals,
-          :$total-handlers, :$total-lexical-values, :$total-local-debug-names
+          :$M, :@frames, :$elems, :bytes($offset - $start),
+          :$total-locals, :$total-lexicals, :$total-handlers,
+          :$total-lexical-values, :$total-local-debug-names
         )
     }
 
@@ -533,16 +555,16 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
     }
 
     method gist(MoarVM::Bytecode::Frames:D:) {
-        my str @parts = "Frames: $!elems";
-        @parts.push: "$!total-locals.fmt('%8d') local variables"
+        my str @parts = "Frames: $!elems frames, $!bytes bytes";
+        @parts.push: format8d($!total-locals) ~ " local variables"
           if $!total-locals;
-        @parts.push: "$!total-lexicals.fmt('%8d') lexical variables"
+        @parts.push: format8d($!total-lexicals) ~ " lexical variables"
           if $!total-lexicals;
-        @parts.push: "$!total-handlers.fmt('%8d') handlers"
+        @parts.push: format8d($!total-handlers) ~ " handlers"
           if $!total-handlers;
-        @parts.push: "$!total-lexical-values.fmt('%8d') static lexical values"
+        @parts.push: format8d($!total-lexical-values) ~ " static lexical values"
           if $!total-lexical-values;
-        @parts.push: "$!total-local-debug-names.fmt('%8d') local debug names"
+        @parts.push: format8d($!total-local-debug-names) ~ " local debug names"
           if $!total-local-debug-names;
 
         @parts.join("\n")
@@ -604,7 +626,7 @@ class MoarVM::Bytecode does Iterable {
     # Helper methods for creating object, mostly for readability
     method !make-cu-dependencies(uint $offset) {
         $!bytecode.subbuf(0, $offset).decode.lines.head(*-1).map({
-            $_ # XXX proper object
+            CompUnit::PrecompilationDependency::File.deserialize($_)
         }).List
     }
 
@@ -722,8 +744,9 @@ class MoarVM::Bytecode does Iterable {
     method iterator() { MoarVM::Bytecode::Iterator.new(:source(self)) }
 
     method de-compile(:$verbose) {
-        self.map(*.gist(:$verbose)).join("\n")
+        self.hyper(:batch(1024)).map(*.gist(:$verbose)).join("\n")
     }
+
     # Utility methods
     method uint16(uint $offset) { $!bytecode.read-uint16($offset, LE) }
     method uint16s(uint $offset is copy, uint $entries = 16) {
@@ -782,14 +805,18 @@ class MoarVM::Bytecode does Iterable {
         paths(self.rootdir, :file(* eq $filename)).sort.head
     }
 
-    method files() {
-        paths(self.rootdir, :file(*.ends-with(".moarvm"))).sort
+    method files(:$instantiate) {
+        my @paths = paths(self.rootdir, :file(*.ends-with(".moarvm"))).sort;
+        $instantiate
+          ?? @paths.map({ self.new($_) })
+          !! @paths
     }
 
     multi method gist(MoarVM::Bytecode:D:) {
         my str $head  = $!path ?? "File: $!path" !! "Created from a Blob";
         my str @parts = "$head ($!bytecode.elems() bytes)";
 
+        @parts.push: "Opcodes: " ~ self.opcodes-length ~ " bytes";
         @parts.push: $!strings.gist;
         @parts.push: $!frames.gist;
         if @!callsites.elems -> $elems {

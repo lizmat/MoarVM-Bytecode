@@ -26,7 +26,7 @@ for $*EXECUTABLE.parent(3).add("nqp/MoarVM/src/core/oplist").lines {
         my @parts = .words;
         my $op = @parts.shift;
         @ops.push: $op;
-        %ops{$op} := @parts;
+        %ops{$op} := @parts.join(" ");
     }
 }
 
@@ -55,7 +55,7 @@ while @lines {
     say ";";
     say "";
     say 'my constant %ops =';
-    say "  '$_', \$(%ops{$_}.raku.substr(1, *-1))," for @ops;
+    say "  '$_', '%ops{$_}'," for @ops;
     say ";";
 
     # we're done for this role

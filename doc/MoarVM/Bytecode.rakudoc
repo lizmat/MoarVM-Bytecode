@@ -50,10 +50,16 @@ C<IO::Path> or a C<Buf>/C<Blob> object.
 
 .say for MoarVM::Bytecode.files;
 
+.say for MoarVM::Bytecode.files(:instantiate);
+
 =end code
 
 Returns a sorted list of paths of MoarVM bytecode files that could be found
 in the installation of the currently running C<rakudo> executable.
+
+Optionally accepts a C<:instantiate> named argument to return
+a sorted list of instantiated C<MoarVM::Bytecode> objects instead of
+just paths.
 
 =head2 root
 
@@ -80,6 +86,27 @@ Returns an C<IO::Path> of the bytecode file of the given setting letter.
 Assumes the currently lowest supported setting by default.
 
 =head1 HELPER SCRIPTS
+
+=head2 bcinfo
+
+=begin code
+
+$ bcinfo --help
+Usage:
+  bin/bcinfo <file> [--filename=<Str>] [--name=<Str>] [--opcode=<Str>] [--header] [--decomp] [--hexdump] [--verbose]
+
+    <file>              filename of bytecode, or setting letter
+    --filename=<Str>    select frames with given filename
+    --name=<Str>        select frames with given name
+    --opcode=<Str>      select frames containing opcode
+    --header            show header information
+    --decomp            de-compile file / selected frames
+    --hexdump           show hexdump of selected frames
+    --verbose           be verbose when possible
+
+=end code
+
+Produces various types of information about the given bytecode file.
 
 =head2 csites
 
@@ -599,7 +626,7 @@ A C<Map> of additional adverb strings.
 
 =begin code :lang<raku>
 
-my $bytes := $op.bytes || $op.bytes($frame, $offset);
+my $bytes := $op.bytes($frame, $offset);
 
 =end code
 
@@ -636,6 +663,10 @@ my $op = MoarVM::Op.new("no_op");
 
 Return an instantiated C<MoarVM::Op> object from the given name or
 opcode number.
+
+=head3 operands
+
+A C<List> of operands, if any.
 
 =head1 AUTHOR
 

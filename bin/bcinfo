@@ -1,0 +1,68 @@
+#- bcinfo ---------------------------------------------------------------------
+# CLI to provide info about a given bytecode file
+
+use MoarVM::Bytecode;
+
+my %*SUB-MAIN-OPTS = :named-anywhere, :coerce-allomorphs-to(Str);
+
+#- helper subs -----------------------------------------------------------------
+sub divider() {
+    say '#-------------------------------------------------------------------------------';
+}
+
+#- MAIN ------------------------------------------------------------------------
+sub MAIN(
+  Str   $file,      #= filename of bytecode, or setting letter
+  Str  :$filename,  #= select frames with given filename
+  Str  :$name,      #= select frames with given name
+  Str  :$opcode,    #= select frames containing opcode
+  Bool :$header,    #= show header information
+  Bool :$decomp,    #= de-compile file / selected frames
+  Bool :$hexdump,   #= show hexdump of selected frames
+  Bool :$verbose,   #= be verbose when possible
+) {
+    CATCH {
+        note .message;
+        exit 1;
+    }
+
+    my sub show(\seq) {
+        my $divider := $hexdump || $decomp;
+        for seq {
+            divider                           if $divider;
+            say .gist(:$verbose);
+            say ""                            if $divider;
+            say .hexdump ~ "\n"               if $hexdump;
+            say .de-compile(:$verbose) ~ "\n" if $decomp;
+            LAST divider                      if $divider;
+        }
+    }
+
+    my $M := MoarVM::Bytecode.new($file);
+    if $header {
+        say $M.gist(:$verbose);
+        say "";
+    }
+
+    if $filename || $name {
+        my $seq := $M.frames;
+        show $filename
+          ?? $name
+            ?? $seq.grep({
+                   .filename.contains($filename) && .name.contains($name)
+               })
+            !! $seq.grep(*.filename.contains($filename))
+          !! $seq.grep(*.name.contains($name));
+    }
+    elsif $opcode {
+        show $M.frames.grep(*.first(*.name.contains($opcode)));
+    }
+    elsif $decomp {
+        say $M.de-compile;
+    }
+    else {
+        say $M.gist(:$verbose) unless $header;
+    }
+}
+
+# vim: expandtab shiftwidth=4

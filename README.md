@@ -46,9 +46,13 @@ files
 
 ```raku
 .say for MoarVM::Bytecode.files;
+
+.say for MoarVM::Bytecode.files(:instantiate);
 ```
 
 Returns a sorted list of paths of MoarVM bytecode files that could be found in the installation of the currently running `rakudo` executable.
+
+Optionally accepts a `:instantiate` named argument to return a sorted list of instantiated `MoarVM::Bytecode` objects instead of just paths.
 
 root
 ----
@@ -72,6 +76,24 @@ Returns an `IO::Path` of the bytecode file of the given setting letter. Assumes 
 
 HELPER SCRIPTS
 ==============
+
+bcinfo
+------
+
+    $ bcinfo --help
+    Usage:
+      bin/bcinfo <file> [--filename=<Str>] [--name=<Str>] [--opcode=<Str>] [--header] [--decomp] [--hexdump] [--verbose]
+
+        <file>              filename of bytecode, or setting letter
+        --filename=<Str>    select frames with given filename
+        --name=<Str>        select frames with given name
+        --opcode=<Str>      select frames containing opcode
+        --header            show header information
+        --decomp            de-compile file / selected frames
+        --hexdump           show hexdump of selected frames
+        --verbose           be verbose when possible
+
+Produces various types of information about the given bytecode file.
 
 csites
 ------
@@ -554,7 +576,7 @@ A `Map` of additional adverb strings.
 ### bytes
 
 ```raku
-my $bytes := $op.bytes || $op.bytes($frame, $offset);
+my $bytes := $op.bytes($frame, $offset);
 ```
 
 The number of bytes this op occupies in memory. Returns **0** if the op has a variable size.
@@ -582,6 +604,10 @@ my $op = MoarVM::Op.new("no_op");
 ```
 
 Return an instantiated `MoarVM::Op` object from the given name or opcode number.
+
+### operands
+
+A `List` of operands, if any.
 
 AUTHOR
 ======

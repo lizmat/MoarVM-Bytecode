@@ -15,21 +15,12 @@ ok $M.op("p6stateinit"), "can we obtain extension ops";
 my @frames := $M.frames.reify-all;
 is @frames.elems, $M.frames.elems, "did we get all frames";
 
-my @files = $M.files;
+my @files = $M.files(:instantiate);
 ok @files.elems, "did we find any bytecode files";
 
-subtest "Check all known bytecode files" => {
-    plan @files + 1;
-
-    my %hll-names;
-
-    for @files {
-        ok (my $m := MoarVM::Bytecode.new($_)), $_;
-        %hll-names{$m.hll-name}++;
-    }
-
-    is %hll-names.elems, 2, 'Did we see 2 HLL names';
-}
+my %hll-names;
+%hll-names{.hll-name}++ for @files;
+is %hll-names.elems, 2, 'Did we see 2 HLL names';
 
 is $M.strings.elems, $M.string-heap-entries,
   "Found $M.strings.elems() strings in $setting setting";
@@ -51,7 +42,7 @@ for MoarVM::Op.new(0), MoarVM::Op.new("no_op") -> $op {
         is-deeply $op.is-sequence, False,             "not a sequence";
         is        $op.index,       0,                 "is index of op ok";
         is        $op.bytes,       2,                 "is bytes of op ok";
-        is-deeply $op.registers,   (),                "no registers involved?";
+        is-deeply $op.operands,    (),                "no registers involved?";
         is-deeply $op.adverbs,     { :confprog }.Map, "a single attribute?";
     }
 }
