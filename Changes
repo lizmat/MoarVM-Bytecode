@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.15  2024-04-28T20:20:10+02:00
     - Add helper script "bceval"
     - Add MoarVM::Op.not-inlineable method
     - Add MoarVM::Bytecode::Frame.inlineable method
