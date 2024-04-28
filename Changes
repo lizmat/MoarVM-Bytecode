@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.14  2024-04-28T17:47:00+02:00
     - Make sure that cu-dependencies contain actual
       CompUnit::PrecompilationDependency::File objects
     - Add :instantiate named argument to "files" method
