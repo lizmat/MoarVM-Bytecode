@@ -2066,6 +2066,8 @@ class MoarVM::Op {
         )
     }
 
+    method not-inlineable(MoarVM::Op:D:) { $!adverbs<noinline> }
+
     method bytes(MoarVM::Op:D: $source?, $offset?) {
         $!bytes || calculate-bytes $!operands, -> $bytes {
             2 + $source.callsites[

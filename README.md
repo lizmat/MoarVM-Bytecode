@@ -77,6 +77,18 @@ Returns an `IO::Path` of the bytecode file of the given setting letter. Assumes 
 HELPER SCRIPTS
 ==============
 
+bceval
+------
+
+    $ bceval c '.strings.grep(*.contains("zip"))'
+    &zip
+    zip
+    zip-latest
+
+Helper script to allow simple actions on a `MoarVM::Bytecode` object from the command line. The first argument indicates the bytecode file to load. The second argument indicates the code to be executed.
+
+The topic `$_` is set with the `MoarVM::Bytecode` object upon entry.
+
 bcinfo
 ------
 
@@ -414,6 +426,10 @@ Frame
 
 The `Frame` class provides these methods:
 
+### is-inlineable
+
+Return `Bool` whether the current frame is considered to be inlineable.
+
 ### cuuid
 
 A string representing the compilation unit ID.
@@ -604,6 +620,10 @@ my $op = MoarVM::Op.new("no_op");
 ```
 
 Return an instantiated `MoarVM::Op` object from the given name or opcode number.
+
+### not-inlineable
+
+Returns `True` if the op causes the frame to which it belongs to be not inlineable. Otherwise returns `False`.
 
 ### operands
 

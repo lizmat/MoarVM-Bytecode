@@ -87,6 +87,23 @@ Assumes the currently lowest supported setting by default.
 
 =head1 HELPER SCRIPTS
 
+=head2 bceval
+
+=begin code
+
+$ bceval c '.strings.grep(*.contains("zip"))'
+&zip
+zip
+zip-latest
+
+=end code
+
+Helper script to allow simple actions on a C<MoarVM::Bytecode> object
+from the command line.  The first argument indicates the bytecode file
+to load.  The second argument indicates the code to be executed.
+
+The topic C<$_> is set with the C<MoarVM::Bytecode> object upon entry.
+
 =head2 bcinfo
 
 =begin code
@@ -475,6 +492,10 @@ Always C<False>.
 
 The C<Frame> class provides these methods:
 
+=head3 is-inlineable
+
+Return C<Bool> whether the current frame is considered to be inlineable.
+
 =head3 cuuid
 
 A string representing the compilation unit ID.
@@ -663,6 +684,11 @@ my $op = MoarVM::Op.new("no_op");
 
 Return an instantiated C<MoarVM::Op> object from the given name or
 opcode number.
+
+=head3 not-inlineable
+
+Returns C<True> if the op causes the frame to which it belongs
+to be not inlineable.  Otherwise returns C<False>.
 
 =head3 operands
 

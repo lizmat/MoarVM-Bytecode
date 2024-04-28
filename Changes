@@ -1,6 +1,9 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Add helper script "bceval"
+    - Add MoarVM::Op.not-inlineable method
+    - Add MoarVM::Bytecode::Frame.inlineable method
 
 0.0.14  2024-04-28T17:47:00+02:00
     - Make sure that cu-dependencies contain actual

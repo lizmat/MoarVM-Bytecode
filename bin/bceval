@@ -1,0 +1,35 @@
+#- bceval ---------------------------------------------------------------------
+# CLI to process any code given with $M for the MoarVM::Bytecode object
+
+use MoarVM::Bytecode;
+
+CATCH {
+    note .message;
+    exit 1;
+}
+
+my $file := @*ARGS.shift;
+if $file eq '-h' | '--help' {
+    say q:to/HELP/;
+Create a MoarVM::Bytecode object (specified with the first argument)
+and evaluate the code given by the second argument with the instantiated
+object being available as '$_'.  If the result is Iterable, then say each
+separate result.  Otherwise say the result verbatim.
+
+For instance:
+    $ bceval c '.strings.grep(*.contains("zip"))'
+    &zip
+    zip
+    zip-latest
+HELP
+}
+else {
+    my $M      := MoarVM::Bytecode.new($file);
+    my $result := ('$_ := $M; ' ~ @*ARGS.shift).EVAL;
+
+    $result ~~ Iterable && !($result.WHAT =:= MoarVM::Bytecode)
+      ?? (.say for $result)
+      !! (say $result);
+}
+
+# vim: expandtab shiftwidth=4

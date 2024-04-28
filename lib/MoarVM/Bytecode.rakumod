@@ -215,6 +215,10 @@ my class MoarVM::Bytecode::Frame does Iterable {
     method has-exit-handler() { $!flags +& 1             }
     method is-thunk()         { $!flags +& 2 && 1        }
 
+    method is-inlineable() {
+        self.opcodes.elems <= 192 && !(self.first(*.not-inlineable))
+    }
+
     method opcodes() {
         $!opcodes ~~ Callable
           ?? ($!opcodes := $!opcodes())
@@ -246,6 +250,7 @@ my class MoarVM::Bytecode::Frame does Iterable {
             }
         }
 
+        @parts.push: "inlineable"       if self.is-inlineable;
         @parts.push: "no-outer"         if self.no-outer;
         @parts.push: "has-exit-handler" if self.has-exit-handler;
         @parts.push: "is-thunk"         if self.is-thunk;

@@ -42,7 +42,7 @@ for MoarVM::Op.new(0), MoarVM::Op.new("no_op") -> $op {
         is-deeply $op.is-sequence, False,             "not a sequence";
         is        $op.index,       0,                 "is index of op ok";
         is        $op.bytes,       2,                 "is bytes of op ok";
-        is-deeply $op.operands,    (),                "no registers involved?";
+        is-deeply $op.operands,    (),                "no operands involved?";
         is-deeply $op.adverbs,     { :confprog }.Map, "a single attribute?";
     }
 }
