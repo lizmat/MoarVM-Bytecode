@@ -123,7 +123,7 @@ soon as it is created, and before it's returned to userspace (which could
 allocate more) are the way we make sure it isn't collected too early.
 
     +---------------------------------------------------------+
-    | Index into the string heap of the SC unique ID          |
+    | Index into the string heap of the SC ID                 |
     |    32-bit unsigned integer                              |
     +---------------------------------------------------------+
 
@@ -166,7 +166,7 @@ Each frame starts with the following data.
     | Number of lexicals                                      |
     |    32-bit unsigned integer                              |
     +---------------------------------------------------------+
-    | Compilation unit unique ID                              |
+    | Compilation unit ID                                     |
     |    32-bit string heap index                             |
     +---------------------------------------------------------+
     | Name                                                    |
