@@ -452,7 +452,7 @@ A list of [Handler](#Handler) objects, representing the handlers in this frame.
 
 ### hexdump
 
-Return a hexdump of the opcodes of this frame.
+Return a hexdump of the opcodes of this frame. Optionally takes a named argument `:highlight` which will highlight the bytes of the actual opcodes (excluding any argument bytes following them).
 
 ### index
 

@@ -28,6 +28,9 @@ my constant MAGIC  = 724320148219055949;  # "MOARVM\r\n" as a 64bit uint
 my constant IDMAX  = 10240;               # max offset for MAGIC finding
 my constant EXTOPS = 1024;                # opcode # of first extension op
 
+my constant BON  = "\e[1m";   # BOLD ON
+my constant BOFF = "\e[22m";  # BOLD OFF
+
 # From src/core/callsite.h
 my constant MVM_CALLSITE_ARG_OBJ     =   1; # object
 my constant MVM_CALLSITE_ARG_INT     =   2; # native integer, signed
@@ -39,13 +42,33 @@ my constant MVM_CALLSITE_ARG_FLAT    =  64; # flattened argument
 my constant MVM_CALLSITE_ARG_UINT    = 128; # native integer, unsigned
 
 #- general helper subs ---------------------------------------------------------
-my sub dumphex(Buf:D $blob, uint $start, uint $bytes) {
+my sub dumphex(Buf:D $blob, uint $start, uint $bytes, @on?) {
     my uint $base = $start +& 0x0fffffff0;
     my uint $last = $start + $bytes;
 
     my &format-offset := Format.new('%' ~ formatx($last).chars ~ 'x');
 
-    sub oneline(uint $offset is copy) {
+    sub with-highlight(uint $offset is copy) {
+        my str @parts = format-offset($offset), "";
+
+        for ^16 {
+            my $cell := format02x($blob[$offset]);
+
+            if $offset < $start || $offset >= $last {
+                $cell := "  ";
+            }
+            elsif @on && @on[0] == $offset {
+                @on.shift;
+                $cell := BON ~ $cell ~ BOFF;
+            }
+
+            @parts.push: $cell;
+            ++$offset;
+        }
+        @parts.join(" ")
+    }
+
+    sub without-highlight(uint $offset is copy) {
         my str @parts = format-offset($offset), "";
 
         for ^16 {
@@ -59,6 +82,7 @@ my sub dumphex(Buf:D $blob, uint $start, uint $bytes) {
 
     my str @parts;
     my uint $offset = $base;
+    my &oneline := @on ?? &with-highlight !! &without-highlight;
     while $offset < $last {
         @parts.push: oneline($offset);
         $offset += 16;
@@ -227,13 +251,47 @@ my class MoarVM::Bytecode::Frame does Iterable {
 
     method iterator() { MoarVM::Bytecode::Iterator.new(:source(self)) }
 
-    method hexdump() {
-       my $opcodes := self.opcodes;
-       dumphex($opcodes, 0, $opcodes.elems)
+    multi method hexdump() {
+        my $opcodes := self.opcodes;
+        dumphex($opcodes, 0, $opcodes.elems)
+    }
+    multi method hexdump(:$highlight!) {
+        return self.hexdump unless $highlight;
+
+        my      $M       := $!M;
+        my      $opcodes := self.opcodes;
+        my uint $elems    = $opcodes.elems;
+        my uint $offset;
+        my uint @on;
+
+        while $offset < $elems {
+            my $op := $M.op($opcodes.read-uint16($offset, LE));
+            if $op ~~ Failure {
+                $offset = $elems;
+            }
+            else {
+                @on.push: $offset    ;
+                @on.push: $offset + 1;
+                $offset = $offset + $op.bytes($M, $offset);
+            }
+        }
+        dumphex($opcodes, 0, $opcodes.elems, @on)
     }
 
-    method de-compile(:$verbose) {
+    multi method de-compile(:$verbose) {
         self.map(*.gist(:$verbose)).join("\n")
+    }
+    multi method de-compile($matcher, :$verbose) {
+        self.map({
+            my str $gist = .gist(:$verbose);
+            $matcher($gist.substr(5,14).trim-trailing)
+              ?? $gist.substr(0,5)
+                   ~ BON
+                   ~ $gist.substr(5,14)
+                   ~ BOFF
+                   ~ $gist.substr(19)
+              !! $gist
+        }).join("\n")
     }
 
     multi method gist(MoarVM::Bytecode::Frame:D: :$verbose) {

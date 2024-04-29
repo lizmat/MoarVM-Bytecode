@@ -15,7 +15,7 @@ sub MAIN(
   Str   $file,      #= filename of bytecode, or setting letter
   Str  :$filename,  #= select frames with given filename
   Str  :$name,      #= select frames with given name
-  Str  :$opcode,    #= select frames containing opcode
+  Str  :$opcodes,   #= select frames containing opcodes
   Bool :$header,    #= show header information
   Bool :$decomp,    #= de-compile file / selected frames
   Bool :$hexdump,   #= show hexdump of selected frames
@@ -26,14 +26,34 @@ sub MAIN(
         exit 1;
     }
 
+    my $matcher;
+    my $grepper;
+    if $opcodes {
+        my @opcodes = $opcodes.split(',');
+        if @opcodes.elems == 1 {
+            $matcher :=              *.contains($opcodes);
+            $grepper := *.first(*.name.contains($opcodes));
+        }
+        else {
+            my %lookup is Map = @opcodes.kv.reverse;
+            $matcher :=         { %lookup{$_   }:exists }
+            $grepper := *.first({ %lookup{.name}:exists });
+        }
+    }
+
     my sub show(\seq) {
         my $divider := $hexdump || $decomp;
         for seq {
             divider                           if $divider;
             say .gist(:$verbose);
             say ""                            if $divider;
-            say .hexdump ~ "\n"               if $hexdump;
-            say .de-compile(:$verbose) ~ "\n" if $decomp;
+            say .hexdump(:highlight)   ~ "\n" if $hexdump;
+
+            say ($matcher
+              ?? .de-compile($matcher, :$verbose)
+              !! .de-compile(          :$verbose)
+            ) ~ "\n"                          if $decomp;
+
             LAST divider                      if $divider;
         }
     }
@@ -54,8 +74,8 @@ sub MAIN(
             !! $seq.grep(*.filename.contains($filename))
           !! $seq.grep(*.name.contains($name));
     }
-    elsif $opcode {
-        show $M.frames.grep(*.first(*.name.contains($opcode)));
+    elsif $opcodes {
+        show $M.frames.grep($grepper);
     }
     elsif $decomp {
         say $M.de-compile;

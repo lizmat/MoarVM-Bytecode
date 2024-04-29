@@ -1,6 +1,11 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Add :highlight argument to MoarVM::Bytecode::Frame.hexdump
+    - Change --opcode argument in "bcinfo" to --opcodes to allow
+      specification of multiple comma-separated opcodes
+    - Helper script "bcinfo" will now highlight opcodes where
+      possible
 
 0.0.15  2024-04-28T20:20:10+02:00
     - Add helper script "bceval"

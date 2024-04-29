@@ -518,7 +518,9 @@ A list of L<Handler|#Handler> objects, representing the handlers in this frame.
 
 =head3 hexdump
 
-Return a hexdump of the opcodes of this frame.
+Return a hexdump of the opcodes of this frame.  Optionally takes a
+named argument C<:highlight> which will highlight the bytes of the
+actual opcodes (excluding any argument bytes following them).
 
 =head3 index
 
