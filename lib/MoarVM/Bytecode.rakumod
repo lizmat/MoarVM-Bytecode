@@ -221,7 +221,7 @@ my class MoarVM::Bytecode::ExtensionOp {
 my class MoarVM::Bytecode::Frame does Iterable {
     has        $.M handles <callsites op>;
     has uint32 $.index;
-    has str    $.cuuid;
+    has str    $.cuid;
     has uint16 $.outer-index;
     has uint16 $.flags;
     has uint32 $.sc-dependency-index;
@@ -295,7 +295,7 @@ my class MoarVM::Bytecode::Frame does Iterable {
     }
 
     multi method gist(MoarVM::Bytecode::Frame:D: :$verbose) {
-        my str @parts = format4x($!cuuid);
+        my str @parts = format4x($!cuid);
 
         if self.filename -> $filename is copy {
             my str $line = @!statements ?? ":@!statements.head.line()" !! "";
@@ -510,7 +510,7 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
 
         my $num-locals                :=     $bc.read-uint32($offset +  8, LE);
         my $num-lexicals              :=     $bc.read-uint32($offset + 12, LE);
-        my $cuuid                     := $st[$bc.read-uint32($offset + 16, LE)];
+        my $cuid                      := $st[$bc.read-uint32($offset + 16, LE)];
         my $name                      := $st[$bc.read-uint32($offset + 20, LE)];
         my $outer-index               :=     $bc.read-uint16($offset + 24, LE);
         my $annotation-offset         :=     $bc.read-uint32($offset + 26, LE);
@@ -607,7 +607,7 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         my $frame := MoarVM::Bytecode::Frame.new(
           :$M, :$index, :$opcodes,
           :$num-locals, :$num-lexicals, :$num-handlers,
-          :$cuuid, :$outer-index, :$flags,
+          :$cuid, :$outer-index, :$flags,
           :$sc-dependency-index, :$sc-object-index,
           :@statements, :@handlers, :@locals, :@lexicals
         );

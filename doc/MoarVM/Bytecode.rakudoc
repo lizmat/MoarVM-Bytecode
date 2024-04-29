@@ -496,7 +496,7 @@ The C<Frame> class provides these methods:
 
 Return C<Bool> whether the current frame is considered to be inlineable.
 
-=head3 cuuid
+=head3 cuid
 
 A string representing the compilation unit ID.
 
