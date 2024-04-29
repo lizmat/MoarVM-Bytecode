@@ -460,6 +460,15 @@ The list of L<Argument> objects for this callsite, if any.
 
 The number of bytes this callsite needs.
 
+=head3 has-named-arg
+
+Returns C<True> if the call site has a named argument with the
+given name, else C<False>.
+
+=head3 named
+
+A C<Map> of named arguments, keyed by name.
+
 =head2 ExtensionOp
 
 The C<ExtensionOp> class provides these methods:

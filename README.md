@@ -392,6 +392,14 @@ The list of [Argument](Argument) objects for this callsite, if any.
 
 The number of bytes this callsite needs.
 
+### has-named-arg
+
+Returns `True` if the call site has a named argument with the given name, else `False`.
+
+### named
+
+A `Map` of named arguments, keyed by name.
+
 ExtensionOp
 -----------
 
@@ -430,7 +438,7 @@ The `Frame` class provides these methods:
 
 Return `Bool` whether the current frame is considered to be inlineable.
 
-### cuuid
+### cuid
 
 A string representing the compilation unit ID.
 

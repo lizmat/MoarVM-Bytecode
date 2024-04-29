@@ -23,13 +23,15 @@ my constant @localtype = <
   10     11   12    13    14    15    16    uint8  uint16 uint32
   uint64
 >;
-my constant LE     = LittleEndian;        # make shorter lines
-my constant MAGIC  = 724320148219055949;  # "MOARVM\r\n" as a 64bit uint
-my constant IDMAX  = 10240;               # max offset for MAGIC finding
-my constant EXTOPS = 1024;                # opcode # of first extension op
+my constant LE      = LittleEndian;        # make shorter lines
+my constant MAGIC   = 724320148219055949;  # "MOARVM\r\n" as a 64bit uint
+my constant IDMAX   = 10240;               # max offset for MAGIC finding
+my constant EXTOPS  = 1024;                # opcode # of first extension op
+my constant NONAMED = Map.new;             # no named args in callsite
 
 my constant BON  = "\e[1m";   # BOLD ON
 my constant BOFF = "\e[22m";  # BOLD OFF
+
 
 # From src/core/callsite.h
 my constant MVM_CALLSITE_ARG_OBJ     =   1; # object
@@ -170,7 +172,10 @@ my class MoarVM::Bytecode::Argument is Int {
 #- MoarVM::Bytecode::Callsite --------------------------------------------------
 my class MoarVM::Bytecode::Callsite {
     has uint $.bytes;
-    has      @.arguments;
+    has      @.arguments is built(:bind);
+    has      %.named     is built(:bind);
+
+    method has-named-arg(str $name) { %!named{$name}:exists }
 
     multi method gist(MoarVM::Bytecode::Callsite:D:) {
         @!arguments.map({
@@ -188,7 +193,7 @@ my class MoarVM::Bytecode::Callsite {
                     ?? 'O'
                     !! 'N'
                 !! .is-flattened
-                  ?? '@'
+                  ?? '|%'
                   !! '$'
             );
             @parts.join(" ");
@@ -739,7 +744,8 @@ class MoarVM::Bytecode does Iterable {
         my uint $entries = self.callsites-data-entries;
         for ^$entries {
             my @arguments;
-            my @nameds;
+            my @named;
+            my %named;
 
             my $num-args := $bytecode.read-uint16($offset, LE) +& 0x0ff;
             $offset = $offset + 2;
@@ -747,22 +753,25 @@ class MoarVM::Bytecode does Iterable {
             for ^$num-args {
                 my uint8 $flags = $bytecode.read-uint8($offset++);
                 @arguments.push: Argument.new($flags);
-                @nameds.push($_)
+                @named.push($_)
                   if  $flags +& MVM_CALLSITE_ARG_NAMED
                   && !($flags +& MVM_CALLSITE_ARG_FLAT);
             }
 
             ++$offset if $num-args +& 1;  # padding to 16bit boundary
 
-            for @nameds {
-                @arguments[$_] := @arguments[$_]
-                  but Name($strings[$bytecode.read-uint32($offset, LE)]);
+            for @named {
+                my str $name = $strings[$bytecode.read-uint32($offset, LE)];
+                %named{$name} := @arguments[$_]
+                              := @arguments[$_] but Name($name);
                 $offset = $offset + 4;
             }
 
-            my $bytes := 2 * $num-args; # + (@nameds > 1 && 4 * @nameds);
+            my $bytes := 2 * $num-args;
 
-            $callsites.push: Callsite.new(:@arguments, :$bytes);
+            $callsites.push: Callsite.new(
+              :@arguments, :$bytes, :named(%named ?? %named.Map !! NONAMED)
+            );
         }
         $callsites.List
     }

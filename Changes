@@ -2,6 +2,8 @@ Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
     - Changed all references to "cuuid" to "cuid"
+    - Add "named" attribute to Callsite, with named arguments
+    - Add Callsite.has-named-arg convenience method
 
 0.0.16  2024-04-29T13:08:31+02:00
     - Add :highlight argument to MoarVM::Bytecode::Frame.hexdump
