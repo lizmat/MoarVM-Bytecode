@@ -15,8 +15,8 @@ my sub format02x(uint8 $value) {
 }
 
 use MoarVM::Ops;
-use List::Agnostic:ver<0.0.2>:auth<zef:lizmat>;
-use paths:ver<10.0.9>:auth<zef:lizmat>;
+use List::Agnostic:ver<0.0.3+>:auth<zef:lizmat>;
+use paths:ver<10.1>:auth<zef:lizmat>;
 
 my constant @localtype = <
   0      int8 int16 int32 int64 num32 num64 str    obj    9
@@ -31,7 +31,6 @@ my constant NONAMED = Map.new;             # no named args in callsite
 
 my constant BON  = "\e[1m";   # BOLD ON
 my constant BOFF = "\e[22m";  # BOLD OFF
-
 
 # From src/core/callsite.h
 my constant MVM_CALLSITE_ARG_OBJ     =   1; # object
@@ -914,5 +913,12 @@ class MoarVM::Bytecode does Iterable {
         @parts.join("\n")
     }
 }
+
+#- setting ^ver ^auth ^api -----------------------------------------------------
+
+use META::verauthapi:ver<0.0.1+>:auth<zef:lizmat> $?DISTRIBUTION,
+  MoarVM::Bytecode,
+  MoarVM::Op,
+;
 
 # vim: expandtab shiftwidth=4

@@ -104,6 +104,9 @@ to load.  The second argument indicates the code to be executed.
 
 The topic C<$_> is set with the C<MoarVM::Bytecode> object upon entry.
 
+If the result is an C<Iterable>, then each iteration will be shown
+on a separate line.  Otherwise the return value will be shown.
+
 =head2 bcinfo
 
 =begin code
@@ -189,7 +192,7 @@ Shown are the string index and the string.
 Returns a list of L<Callsite|#Callsite> objects, which contains
 information about the arguments at a given callsite.
 
-=head3 de-compile
+=head2 de-compile
 
 Returns a string with the opcodes and their arguments.
 
