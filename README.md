@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/lizmat/MoarVM-Bytecode/actions/workflows/test.yml/badge.svg)](https://github.com/lizmat/MoarVM-Bytecode/actions)
+[![Actions Status](https://github.com/lizmat/MoarVM-Bytecode/actions/workflows/linux.yml/badge.svg)](https://github.com/lizmat/MoarVM-Bytecode/actions) [![Actions Status](https://github.com/lizmat/MoarVM-Bytecode/actions/workflows/macos.yml/badge.svg)](https://github.com/lizmat/MoarVM-Bytecode/actions) [![Actions Status](https://github.com/lizmat/MoarVM-Bytecode/actions/workflows/windows.yml/badge.svg)](https://github.com/lizmat/MoarVM-Bytecode/actions)
 
 NAME
 ====
@@ -89,6 +89,8 @@ Helper script to allow simple actions on a `MoarVM::Bytecode` object from the co
 
 The topic `$_` is set with the `MoarVM::Bytecode` object upon entry.
 
+If the result is an `Iterable`, then each iteration will be shown on a separate line. Otherwise the return value will be shown.
+
 bcinfo
 ------
 
@@ -158,7 +160,8 @@ callsites
 
 Returns a list of [Callsite](#Callsite) objects, which contains information about the arguments at a given callsite.
 
-### de-compile
+de-compile
+----------
 
 Returns a string with the opcodes and their arguments.
 
