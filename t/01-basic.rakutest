@@ -50,7 +50,9 @@ for MoarVM::Op.new(0), MoarVM::Op.new("no_op") -> $op {
 
 is MoarVM::Op.all-ops.elems, 973, "Right number of ops?";
 
-is-deeply $M.coverables<gen/moar/CORE.c.setting>.List, (1,),
-  "did the generated file show a single initial line";
+my %coverables := $M.coverables;
+is-deeply %coverables.keys.map({
+  %coverables{$_} if .starts-with("gen");
+}).head.List, (1,), "did the generated file show a single initial line";
 
 # vim: expandtab shiftwidth=4
