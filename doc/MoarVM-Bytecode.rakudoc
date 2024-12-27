@@ -181,6 +181,20 @@ Shown are the string index and the string.
 
 =head1 INSTANCE METHODS
 
+=head2 coverables
+
+=begin code :lang<raku>
+
+# Show all files and number of lines in that file
+say .key ~ ": " ~ +.value ~ "  lines"
+  for $M.coverables.sort(*.key);
+
+=end code
+
+Returns a C<Map> with the filename(s) as keys, and a list of line
+numbers in that file that have code in them that C<can> be produced
+in a coverage report.
+
 =head2 callsites
 
 =begin code :lang<raku>

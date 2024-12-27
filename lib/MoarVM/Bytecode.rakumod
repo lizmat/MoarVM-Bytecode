@@ -16,7 +16,7 @@ my sub format02x(uint8 $value) {
 
 use MoarVM::Ops;
 use List::Agnostic:ver<0.0.3+>:auth<zef:lizmat>;
-use paths:ver<10.1>:auth<zef:lizmat>;
+use paths:ver<10.1+>:auth<zef:lizmat>;
 
 my constant @localtype = <
   0      int8 int16 int32 int64 num32 num64 str    obj    9
@@ -799,6 +799,29 @@ class MoarVM::Bytecode does Iterable {
     method main-entry-frame-index()      { self.uint32(80) }
     method library-load-frame-index()    { self.uint32(84) }
     method deserialization-frame-index() { self.uint32(88) }
+
+    method coverables() {
+        my int $offset = self.annotation-data-offset + 4;
+        my $entries   := self.annotation-data-length / 12;
+        my $bytecode  := $!bytecode;
+        my $strings   := $!strings;
+        my %annotations;
+
+        # Run through the all of the annotations
+        for ^$entries {
+            (%annotations{
+              $strings[$bytecode.read-uint32($offset, LE)]
+            } //= my int @).push(
+              $bytecode.read-uint32($offset + 4, LE)
+            );
+            $offset = $offset + 12;
+        }
+
+        # Remove all of the dupes
+        $_ = .sort.squish for %annotations.values;
+
+        %annotations.Map
+    }
 
     # Introspection methods
     multi method op(Int:D $index) {

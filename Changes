@@ -1,6 +1,7 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Add method "coverables"
 
 0.0.17  2024-09-25T17:57:09+02:00
     - Changed all references to "cuuid" to "cuid"

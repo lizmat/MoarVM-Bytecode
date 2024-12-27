@@ -151,6 +151,17 @@ Shown are the string index and the string.
 INSTANCE METHODS
 ================
 
+coverables
+----------
+
+```raku
+# Show all files and number of lines in that file
+say .key ~ ": " ~ +.value ~ "  lines"
+  for $M.coverables.sort(*.key);
+```
+
+Returns a `Map` with the filename(s) as keys, and a list of line numbers in that file that have code in them that `can` be produced in a coverage report.
+
 callsites
 ---------
 
