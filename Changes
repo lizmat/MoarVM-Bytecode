@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.18  2024-12-27T12:20:24+01:00
     - Add method "coverables"
 
 0.0.17  2024-09-25T17:57:09+02:00
