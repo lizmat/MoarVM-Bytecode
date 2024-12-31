@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.20  2024-12-31T17:05:53+01:00
     - Bump dependency on Identity::Utils to make the module
       installable again without testing errors
 
