@@ -1,6 +1,11 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Add dependency on "Identity::Utils"
+    - Add support for .new($identity, $repo)
+    - Don't add EVAL blocks to coverables
+    - Remove usage of 6.e Format for now: it stops this module
+      from being pre-compiled when used in another module
 
 0.0.18  2024-12-27T12:20:24+01:00
     - Add method "coverables"

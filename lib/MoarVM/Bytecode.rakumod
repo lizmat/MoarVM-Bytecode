@@ -1,12 +1,12 @@
 # An attempt at providing introspection into the MoarVM bytecode format
 
-use v6.e.PREVIEW;  # We use new Format support
+#use v6.e.PREVIEW;  # We use new Format support
 
 # Faster formatted values!
-my &formatx   := Format.new('%x');
-my &format4x  := Format.new('%4x');
-my &format8d  := Format.new('%8d');
-my &format12s := Format.new('%-12s');
+my &formatx   := { sprintf '%x', $_ };     # Format.new('%x');
+my &format4x  := { sprintf '%4x', $_ };    # Format.new('%4x');
+my &format8d  := { sprintf '%8d', $_ };    # Format.new('%8d');
+my &format12s := { sprintf '%-12s', $_ };  # Format.new('%-12s');
 
 # Even faster '%02x' formatting
 my str @lookup = <0 1 2 3 4 5 6 7 8 9 a b c d e f>;
@@ -16,6 +16,7 @@ my sub format02x(uint8 $value) {
 
 use MoarVM::Ops;
 use List::Agnostic:ver<0.0.3+>:auth<zef:lizmat>;
+use Identity::Utils:ver<0.0.12+>:auth<zef:lizmat> <bytecode-io>;
 use paths:ver<10.1+>:auth<zef:lizmat>;
 
 my constant @localtype = <
@@ -47,7 +48,8 @@ my sub dumphex(Buf:D $blob, uint $start, uint $bytes, @on?) {
     my uint $base = $start +& 0x0fffffff0;
     my uint $last = $start + $bytes;
 
-    my &format-offset := Format.new('%' ~ formatx($last).chars ~ 'x');
+    my &format-offset := { sprintf '%' ~ formatx($last).chars ~ 'x', $_ };
+    # Format.new('%' ~ formatx($last).chars ~ 'x');
 
     sub with-highlight(uint $offset is copy) {
         my str @parts = format-offset($offset), "";
@@ -650,9 +652,20 @@ class MoarVM::Bytecode does Iterable {
     has         @.cu-dependencies is built(False);
 
     # Object setup
-    multi method new(Str:D $path is copy) {
-        $path = self.setting($path) if $path.chars == 1;
-        self.new($path.IO )
+    multi method new(Str:D $path is copy, $repo?) {
+        my $io := $path.chars == 1
+          ?? self.setting($path).IO
+          !! $path.IO;
+
+        if $io.e {
+            self.new($io)
+        }
+        orwith bytecode-io($path, $repo) {
+            self.new(.slurp(:bin), :path(.absolute))
+        }
+        else {
+            die "'$path' is not a valid path or identity";
+        }
     }
     multi method new(IO:D $io) {
         self.new($io.slurp(:bin), :path($io.absolute))
@@ -672,7 +685,7 @@ class MoarVM::Bytecode does Iterable {
         Nil while ++$offset < $max && $bytecode.read-uint64($offset) != MAGIC;
 
         if $offset == $max {
-            fail Q|Magic string "MOARVM\r\n" not found|;
+            die Q|Magic string "MOARVM\r\n" not found|;
         }
         elsif $offset {
             @!cu-dependencies := self!make-cu-dependencies($offset);
@@ -809,11 +822,10 @@ class MoarVM::Bytecode does Iterable {
 
         # Run through the all of the annotations
         for ^$entries {
-            (%annotations{
-              $strings[$bytecode.read-uint32($offset, LE)]
-            } //= my int @).push(
+            my $file := $strings[$bytecode.read-uint32($offset, LE)];
+            (%annotations{$file} //= my int @).push(
               $bytecode.read-uint32($offset + 4, LE)
-            );
+            ) unless $file.starts-with("EVAL_");
             $offset = $offset + 12;
         }
 

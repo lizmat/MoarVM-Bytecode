@@ -30,16 +30,28 @@ new
 ---
 
 ```raku
-my $M = MoarVM::Bytecode.new("c");           # the 6.c setting
+my $M = MoarVM::Bytecode.new("c");             # the 6.c setting
 
-my $M = MoarVM::Bytecode.new("foo/bar");     # file as string
+my $M = MoarVM::Bytecode.new("foo/bar");       # path as string
 
-my $M = MoarVM::Bytecode.new($filename.IO);  # path as IO object
+my $M = MoarVM::Bytecode.new("Foo::Bar");      # identity specification
 
-my $M = MoarVM::Bytecode.new($buf);          # a Buf object
+my $M = MoarVM::Bytecode.new("Foo::Bar", "."); # identity + repo specification
+
+my $M = MoarVM::Bytecode.new($filename.IO);    # path as IO object
+
+my $M = MoarVM::Bytecode.new($buf);            # a Buf object
 ```
 
-Create an instance of the `MoarVM::Bytecode` object from a letter (assumed to be a Raku version letter such as "c", "d" or "e"), a filename, an `IO::Path` or a `Buf`/`Blob` object.
+Create an instance of the `MoarVM::Bytecode` object from a letter (assumed to be a Raku version letter such as "c", "d" or "e"), a filename, an `IO::Path` or a `Buf`/`Blob` object, or an identity specification (`use` target such as "Foo::Bar:auth<eco:nick>:ver<0.0.12+>").
+
+In the last case, a second positional argument can be specified to indicate the repository to be used (instead of `$*REPO`), which can be an object of type:
+
+  * Str - indicate a path for a ::FileSystem repo, just as with -I.
+
+  * IO::Path - indicate a path for a ::FileSystem repo
+
+  * CompUnit::Repository - the actual repo to use
 
 files
 -----

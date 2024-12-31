@@ -1,0 +1,16 @@
+use Test;
+use MoarVM::Bytecode;
+
+plan 4;
+
+my $M := MoarVM::Bytecode.new("MoarVM::Bytecode", $*PROGRAM.parent(2));
+
+my $coverables := $M.coverables;
+isa-ok $coverables, Map;
+is $coverables.elems, 1, 'Should only have one key';
+is $coverables.keys.head.words.head,
+  $*PROGRAM.parent(2).add("lib/MoarVM/Bytecode.rakumod").absolute,
+  "are we referring to our own source file";
+is $coverables.values.head.elems, 564, 'Did we get expected number of lines';
+
+# vim: expandtab shiftwidth=4
