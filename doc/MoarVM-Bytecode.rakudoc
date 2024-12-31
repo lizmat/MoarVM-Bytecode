@@ -36,7 +36,7 @@ my $M = MoarVM::Bytecode.new("foo/bar");       # path as string
 
 my $M = MoarVM::Bytecode.new("Foo::Bar");      # identity specification
 
-my $M = MoarVM::Bytecode.new("Foo::Bar", "."); # identity + repo specification
+my $M = MoarVM::Bytecode.new("Foo::Bar", "."); # identity + repo spec
 
 my $M = MoarVM::Bytecode.new($filename.IO);    # path as IO object
 
