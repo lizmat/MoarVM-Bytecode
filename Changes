@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.19  2024-12-31T16:03:03+01:00
     - Add dependency on "Identity::Utils"
     - Add support for .new($identity, $repo)
     - Don't add EVAL blocks to coverables
