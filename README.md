@@ -671,7 +671,7 @@ Elizabeth Mattijsen <liz@raku.rocks>
 COPYRIGHT AND LICENSE
 =====================
 
-Copyright 2024 Elizabeth Mattijsen
+Copyright 2024, 2025 Elizabeth Mattijsen
 
 Source can be located at: https://github.com/lizmat/MoarVM-Bytecode . Comments and Pull Requests are welcome.
 

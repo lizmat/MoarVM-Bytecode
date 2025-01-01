@@ -1,16 +1,31 @@
 use Test;
+
 use MoarVM::Bytecode;
 
-plan 4;
+plan 6;
 
-my $M := MoarVM::Bytecode.new("MoarVM::Bytecode", $*PROGRAM.parent(2));
+sub module-info($identity, $min-elems) is test-assertion {
+    subtest "Checking: $identity" => {
+        plan 5;
 
-my $coverables := $M.coverables;
-isa-ok $coverables, Map;
-is $coverables.elems, 1, 'Should only have one key';
-is $coverables.keys.head.words.head,
-  $*PROGRAM.parent(2).add("lib/MoarVM/Bytecode.rakumod").absolute,
-  "are we referring to our own source file";
-is $coverables.values.head.elems, 564, 'Did we get expected number of lines';
+        my $M := MoarVM::Bytecode.new($identity);
+        isa-ok $M, MoarVM::Bytecode;
+
+        my $coverables := $M.coverables;
+        isa-ok $coverables, Map;
+        is $coverables.elems, 1, "Should only have one key in '$identity'";
+        ok $coverables.keys.head.ends-with("($identity)"),
+          "key ok for '$identity'";
+        my $elems = $coverables.values.head.elems;
+        ok $elems > $min-elems, "$elems lines > $min-elems ok for '$identity'";
+    }
+}
+
+module-info("String::Utils", 220);
+module-info("List::Agnostic", 15);
+module-info("paths", 80);
+module-info("META::verauthapi", 10);
+module-info("Identity::Utils", 130);
+module-info("Test", 460);
 
 # vim: expandtab shiftwidth=4
