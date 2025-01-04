@@ -2,6 +2,12 @@ Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
 
+0.0.22  2025-01-04T13:41:52+01:00
+    - Remove support for specifying identities, it does not
+      belong in this module
+    - Remove dependency on Identity::Utils, it is no longer
+      needed here
+
 0.0.21  2025-01-01T12:43:26+01:00
     - Bump dependency on Identity::Utils to fix errors
     - Update copyright year

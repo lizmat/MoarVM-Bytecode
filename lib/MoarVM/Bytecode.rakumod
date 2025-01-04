@@ -16,7 +16,6 @@ my sub format02x(uint8 $value) {
 
 use MoarVM::Ops;
 use List::Agnostic:ver<0.0.3+>:auth<zef:lizmat>;
-use Identity::Utils:ver<0.0.15+>:auth<zef:lizmat> <bytecode-io>;
 use paths:ver<10.1+>:auth<zef:lizmat>;
 
 my constant @localtype = <
@@ -652,18 +651,13 @@ class MoarVM::Bytecode does Iterable {
     has         @.cu-dependencies is built(False);
 
     # Object setup
-    multi method new(Str:D $path is copy, $repo?) {
+    multi method new(Str:D $path is copy) {
         my $io := $path.chars == 1
           ?? self.setting($path).IO
           !! $path.IO;
 
         if $io.e {
             self.new($io)
-        }
-        orwith bytecode-io($path, $repo) {
-            .e
-              ?? self.new($_)
-              !! die "No bytecode file found for $path, looked at:\n$_.absolute()";
         }
         else {
             die "'$path' is not a valid path or identity";
