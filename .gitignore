@@ -1,6 +1,7 @@
 .precomp/
 /MoarVM-Bytecode-*
 /releases/
+*.rakucov
 1
 2
 3

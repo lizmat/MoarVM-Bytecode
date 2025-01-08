@@ -1,0 +1,13 @@
+use Test::Coverage;
+
+todo("a lot of compile-time stuff still marked as coverable");
+coverage-at-least 75;
+
+todo("a lot of compile-time stuff still marked as coverable");
+uncovered-at-most 100;
+
+source-with-coverage;
+
+report;
+
+# vim: expandtab shiftwidth=4

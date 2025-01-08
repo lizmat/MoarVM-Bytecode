@@ -810,6 +810,7 @@ class MoarVM::Bytecode does Iterable {
     method deserialization-frame-index() { self.uint32(88) }
 
     method coverables() {
+        # +4 = skip bytecode entry on initialization
         my int $offset = self.annotation-data-offset + 4;
         my $entries   := self.annotation-data-length / 12;
         my $bytecode  := $!bytecode;
