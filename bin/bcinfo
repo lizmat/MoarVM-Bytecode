@@ -12,14 +12,14 @@ sub divider() {
 
 #- MAIN ------------------------------------------------------------------------
 sub MAIN(
-  Str   $file,      #= filename of bytecode, or setting letter
-  Str  :$filename,  #= select frames with given filename
-  Str  :$name,      #= select frames with given name
-  Str  :$opcodes,   #= select frames containing opcodes
-  Bool :$header,    #= show header information
-  Bool :$decomp,    #= de-compile file / selected frames
-  Bool :$hexdump,   #= show hexdump of selected frames
-  Bool :$verbose,   #= be verbose when possible
+  Str   $file,         #= use target, setting letter or bytecode path
+  Str  :$filename,     #= select frames with given filename
+  Str  :$name,         #= select frames with given name
+  Str  :$opcodes,      #= select frames containing opcodes
+  Bool :$header,       #= show header information
+  Bool :$decomp,       #= de-compile file / selected frames
+  Bool :$hexdump,      #= show hexdump of selected frames
+  Bool :$verbose,      #= be verbose when possible
 ) {
     CATCH {
         note .message;
@@ -58,7 +58,15 @@ sub MAIN(
         }
     }
 
-    my $M := MoarVM::Bytecode.new($file);
+    my $target = $file;
+    if $target.chars > 1 && !$target.contains('/' | '\\') {
+        with (try "use Identity::Utils <bytecode-io>; &bytecode-io".EVAL)
+          andthen .($target) {
+            $target = $_;
+        }
+    }
+
+    my $M := MoarVM::Bytecode.new($target);
     if $header {
         say $M.gist(:$verbose);
         say "";

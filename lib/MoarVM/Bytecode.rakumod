@@ -943,7 +943,9 @@ class MoarVM::Bytecode does Iterable {
         }
 
         if self.coverables.sort(*.key) -> @coverables {
-            @parts.push: "Coverable keys: @coverables.elems()";
+            my $entries := self.annotation-data-length / 12;
+            my $lines   := @coverables.map(*.value.elems).sum;
+            @parts.push: "Coverable keys: @coverables.elems() from $lines lines ($entries annotations)";
             @parts.push: "  $_.key(): $_.value.elems()"
               for @coverables;
         }

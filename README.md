@@ -85,7 +85,7 @@ bceval
     zip
     zip-latest
 
-Helper script to allow simple actions on a `MoarVM::Bytecode` object from the command line. The first argument indicates the bytecode file to load. The second argument indicates the code to be executed.
+Helper script to allow simple actions on a `MoarVM::Bytecode` object from the command line. The first argument indicates the bytecode file to load (either a `use` target, setting letter or path. The second argument indicates the code to be executed.
 
 The topic `$_` is set with the `MoarVM::Bytecode` object upon entry.
 
@@ -98,7 +98,7 @@ bcinfo
     Usage:
       bin/bcinfo <file> [--filename=<Str>] [--name=<Str>] [--opcode=<Str>] [--header] [--decomp] [--hexdump] [--verbose]
 
-        <file>              filename of bytecode, or setting letter
+        <file>              use target, setting letter or bytecode path
         --filename=<Str>    select frames with given filename
         --name=<Str>        select frames with given name
         --opcode=<Str>      select frames containing opcode
@@ -107,7 +107,7 @@ bcinfo
         --hexdump           show hexdump of selected frames
         --verbose           be verbose when possible
 
-Produces various types of information about the given bytecode file.
+Produces various types of information about the given bytecode file, specified by either a `use` target, setting letter or path.
 
 csites
 ------
@@ -142,9 +142,9 @@ sheap
        42 byte
      2844 bytecode-size
 
-Helper script for browsing the string heap of a given bytecode file (specified by either a setting letter, or a filename of a bytecode file).
+Helper script for browsing the string heap of a given bytecode file (specified by either a `use` target, setting letter, or a path of a bytecode file).
 
-String arguments are interpreted as a key to do a .grep on the whole string heap. Numerical arguments are interpreted as indices into the string heap.
+String arguments are interpreted as a key to do a .grep on the whole string heap. Numerical arguments are interpreted as indices into the string heap. If no arguments are given, the entire string heap will be produced.
 
 Shown are the string index and the string.
 

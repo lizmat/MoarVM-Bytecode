@@ -2,6 +2,11 @@ Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
 
+0.0.23  2025-01-08T23:03:39+01:00
+    - Also show coverables information in .gist
+    - Allow specification of a use target instead of just
+      paths or setting letters
+
 0.0.22  2025-01-04T13:41:52+01:00
     - Remove support for specifying identities, it does not
       belong in this module

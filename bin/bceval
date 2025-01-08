@@ -24,7 +24,15 @@ For instance:
 HELP
 }
 else {
-    my $M      := MoarVM::Bytecode.new($file);
+    my $target = $file;
+    if $target.chars > 1 && !$target.contains('/' | '\\') {
+        with (try "use Identity::Utils <bytecode-io>; &bytecode-io".EVAL)
+          andthen .($target) {
+            $target = $_;
+        }
+    }
+
+    my $M      := MoarVM::Bytecode.new($target);
     my $result := ('$_ := $M; ' ~ @*ARGS.shift).EVAL;
 
     $result ~~ Iterable && !($result.WHAT =:= MoarVM::Bytecode)

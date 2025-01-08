@@ -1,5 +1,7 @@
 use Test::Coverage;
 
+plan 2;
+
 todo("a lot of compile-time stuff still marked as coverable");
 coverage-at-least 75;
 
