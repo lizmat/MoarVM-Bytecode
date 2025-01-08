@@ -942,6 +942,12 @@ class MoarVM::Bytecode does Iterable {
             @parts.push: "Serialization context dependencies: none";
         }
 
+        if self.coverables.sort(*.key) -> @coverables {
+            @parts.push: "Coverable keys: @coverables.elems()";
+            @parts.push: "  $_.key(): $_.value.elems()"
+              for @coverables;
+        }
+
         @parts.join("\n")
     }
 }
