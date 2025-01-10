@@ -25,7 +25,7 @@ my constant @localtype = <
 >;
 my constant LE      = LittleEndian;        # make shorter lines
 my constant MAGIC   = 724320148219055949;  # "MOARVM\r\n" as a 64bit uint
-my constant IDMAX   = 10240;               # max offset for MAGIC finding
+my constant IDMAX   = 51200;               # max offset for MAGIC finding
 my constant EXTOPS  = 1024;                # opcode # of first extension op
 my constant NONAMED = Map.new;             # no named args in callsite
 
@@ -916,8 +916,8 @@ class MoarVM::Bytecode does Iterable {
     }
 
     multi method gist(MoarVM::Bytecode:D:) {
-        my str $head  = $!path ?? "File: $!path" !! "Created from a Blob";
-        my str @parts = "$head ($!bytecode.elems() bytes)";
+        my str @parts = $!path ?? "File: $!path" !! "Created from a Blob";
+        @parts.push: "Size: $!bytecode.elems() bytes";
 
         @parts.push: "Opcodes: " ~ self.opcodes-length ~ " bytes";
         @parts.push: $!strings.gist;
