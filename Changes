@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.24  2025-01-10T17:38:39+01:00
     - Increase area x5 to look for magic number
     - Some .gist tweaks
 
