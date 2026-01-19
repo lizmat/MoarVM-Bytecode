@@ -3,29 +3,31 @@
   "authors": [
     "Elizabeth Mattijsen"
   ],
-  "build-depends": [
-  ],
-  "depends": [
-    "List::Agnostic:ver<0.0.3+>:auth<zef:lizmat>",
-    "paths:ver<10.1+>:auth<zef:lizmat>",
-    "META::verauthapi:ver<0.0.1+>:auth<zef:lizmat>"
-  ],
+  "depends": {
+    "runtime": {
+      "requires": [
+        "List::Agnostic:ver<0.0.3+>:auth<zef:lizmat>",
+        "paths:ver<10.1+>:auth<zef:lizmat>",
+        "META::verauthapi:ver<0.0.1+>:auth<zef:lizmat>"
+      ]
+    }
+  },
   "description": "Provide introspection into MoarVM bytecode",
   "license": "Artistic-2.0",
   "name": "MoarVM::Bytecode",
-  "perl": "6.d",
   "provides": {
     "MoarVM::Bytecode": "lib/MoarVM/Bytecode.rakumod",
     "MoarVM::Ops": "lib/MoarVM/Ops.rakumod"
   },
-  "resources": [
-  ],
-  "source-url": "https://github.com/lizmat/MoarVM-Bytecode.git",
+  "raku": "6.d",
+  "support": {
+    "bugtracker": "https://github.com/lizmat/MoarVM-Bytecode/issues",
+    "email": "liz@raku.rocks",
+    "source": "https://github.com/lizmat/MoarVM-Bytecode.git"
+  },
   "tags": [
     "MOARVM",
     "UTIL"
-  ],
-  "test-depends": [
   ],
   "version": "0.0.24"
 }

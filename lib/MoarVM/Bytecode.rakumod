@@ -416,6 +416,8 @@ my class MoarVM::Bytecode::Strings does List::Agnostic {
         }
     }
 
+    method elems() { $!elems }  # required by Array::Agnostic
+
     method gist(MoarVM::Bytecode::Strings:D:) {
         "String Heap: $!elems different strings, $!bytes bytes"
     }
@@ -495,6 +497,8 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
               !! $frame
         }
     }
+
+    method elems() { $!elems }  # required by Array::Agnostic
 
     method reify-all(:$batch = 4) {
         my @frames is List = @!frames.pairs.hyper(:$batch).map: {

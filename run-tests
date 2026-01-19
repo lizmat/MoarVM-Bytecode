@@ -71,11 +71,9 @@ my @failed;
 my $done   = 0;
 
 sub process($proc, $filename) {
-    if $proc {
-        $proc.out.slurp;
-        $spesh-log.unlink if $spesh-log;
-    }
-    else {
+
+    # Something wrong apparently
+    if $proc.exitcode -> $exit {
         @failed.push($filename);
         if $proc.out.slurp -> $stdout {
             my @lines = $stdout.lines;
@@ -97,12 +95,18 @@ sub process($proc, $filename) {
             say $spesh-log.lines(:!chomp).tail(20000).join;
             $spesh-log.unlink;
         }
+        exit $exit;
+    }
+
+    # All ok
+    else {
+        $proc.out.slurp;
+        $spesh-log.unlink if $spesh-log;
     }
 }
 
 sub install() {
-    my $zef  := $*DISTRO.is-win ?? 'zef.bat' !! 'zef';
-    my $proc := run $zef, "install", ".", "--verbose", "--/test", :out,:err,:merge;
+    my $proc := run 'zef', "install", ".", "--verbose", "--/test", :out,:err,:merge;
     process($proc, "*installation*");
 }
 

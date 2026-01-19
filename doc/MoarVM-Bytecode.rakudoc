@@ -7,7 +7,6 @@ MoarVM::Bytecode - Provide introspection into MoarVM bytecode
 =head1 SYNOPSIS
 
 =begin code :lang<raku>
-
 use MoarVM::Bytecode;
 
 my $M = MoarVM::Bytecode.new($filename);  # or letter or IO or Blob
@@ -15,7 +14,6 @@ my $M = MoarVM::Bytecode.new($filename);  # or letter or IO or Blob
 say $M.hll-name;     # most likely "Raku"
 
 say $M.strings[99];  # the 100th string on the string heap
-
 =end code
 
 =head1 DESCRIPTION
@@ -29,7 +27,6 @@ L<docs/bytecode.markdown|https://github.com/MoarVM/MoarVM/blob/main/docs/bytecod
 =head2 new
 
 =begin code :lang<raku>
-
 my $M = MoarVM::Bytecode.new("c");             # the 6.c setting
 
 my $M = MoarVM::Bytecode.new("foo/bar");       # path as string
@@ -37,7 +34,6 @@ my $M = MoarVM::Bytecode.new("foo/bar");       # path as string
 my $M = MoarVM::Bytecode.new($filename.IO);    # path as IO object
 
 my $M = MoarVM::Bytecode.new($buf);            # a Buf object
-
 =end code
 
 Create an instance of the C<MoarVM::Bytecode> object from a letter
@@ -47,11 +43,9 @@ filename, an C<IO::Path> or a C<Buf>/C<Blob> object.
 =head2 files
 
 =begin code :lang<raku>
-
 .say for MoarVM::Bytecode.files;
 
 .say for MoarVM::Bytecode.files(:instantiate);
-
 =end code
 
 Returns a sorted list of paths of MoarVM bytecode files that could be found
@@ -64,9 +58,7 @@ just paths.
 =head2 root
 
 =begin code :lang<raku>
-
 my $rootdir = MoarVM::Bytecode.rootdir;
-
 =end code
 
 Returns an C<IO::Path> of the root directory of the installation of the
@@ -75,11 +67,9 @@ currently running C<rakudo> executable.
 =head2 setting
 
 =begin code :lang<raku>
-
 my $setting = MoarVM::Bytecode.setting;
 
 my $setting = MoarVM::Bytecode.setting("d");
-
 =end code
 
 Returns an C<IO::Path> of the bytecode file of the given setting letter.
@@ -90,12 +80,10 @@ Assumes the currently lowest supported setting by default.
 =head2 bceval
 
 =begin code
-
 $ bceval c '.strings.grep(*.contains("zip"))'
 &zip
 zip
 zip-latest
-
 =end code
 
 Helper script to allow simple actions on a C<MoarVM::Bytecode> object
@@ -111,7 +99,6 @@ on a separate line.  Otherwise the return value will be shown.
 =head2 bcinfo
 
 =begin code
-
 $ bcinfo --help
 Usage:
   bin/bcinfo <file> [--filename=<Str>] [--name=<Str>] [--opcode=<Str>] [--header] [--decomp] [--hexdump] [--verbose]
@@ -124,7 +111,6 @@ Usage:
     --decomp            de-compile file / selected frames
     --hexdump           show hexdump of selected frames
     --verbose           be verbose when possible
-
 =end code
 
 Produces various types of information about the given bytecode file,
@@ -133,10 +119,8 @@ specified by either a C<use> target, setting letter or path.
 =head2 csites
 
 =begin code
-
 $ csites c 12
  12 $, $, N
-
 =end code
 
 Helper code to show the callsite info of the given callsite number.
@@ -144,7 +128,6 @@ Helper code to show the callsite info of the given callsite number.
 =head2 opinfo
 
 =begin code
-
 $ opinfo if_i unless_i
  24 if_i r(int64),ins (8 bytes)
  25 unless_i r(int64),ins (8 bytes)
@@ -152,7 +135,6 @@ $ opinfo if_i unless_i
 $ opinfo 42 666
  42 bindlex_nn str,r(num64) (8 bytes)
 666 atpos2d_s w(str),r(obj),r(int64),r(int64) (10 bytes)
-
 =end code
 
 Helper script to show the gist of the given op name(s) or number(s).
@@ -160,7 +142,6 @@ Helper script to show the gist of the given op name(s) or number(s).
 =head2 sheap
 
 =begin code
-
 $ sheap e 3 4 5
     3 SETTING::src/core.e/core_prologue.rakumod
     4 language_revision_type
@@ -169,7 +150,6 @@ $ sheap e 3 4 5
 $ sheap e byte
    42 byte
  2844 bytecode-size
-
 =end code
 
 Helper script for browsing the string heap of a given bytecode file
@@ -188,11 +168,9 @@ Shown are the string index and the string.
 =head2 coverables
 
 =begin code :lang<raku>
-
 # Show all files and number of lines in that file
 say .key ~ ": " ~ +.value ~ "  lines"
   for $M.coverables.sort(*.key);
-
 =end code
 
 Returns a C<Map> with the filename(s) as keys, and a list of line
@@ -202,9 +180,7 @@ in a coverage report.
 =head2 callsites
 
 =begin code :lang<raku>
-
 .say for $M.callsites[^10];  # show the first 10 callsites
-
 =end code
 
 Returns a list of L<Callsite|#Callsite> objects, which contains
@@ -217,9 +193,7 @@ Returns a string with the opcodes and their arguments.
 =head2 extension-ops
 
 =begin code :lang<raku>
-
 .say for $M.extension-ops;  # show all extension ops
-
 =end code
 
 Returns a list of NQP extension operators that have been added to this
@@ -228,11 +202,9 @@ bytecode.  Each element consists of an L<ExtensionOp> object.
 =head2 frames
 
 =begin code :lang<raku>
-
 .say for $M.frames[^10];  # show the first 10 frames on the frame heap
 
 my @frames := $M.frames.reify-all;
-
 =end code
 
 Returns a L<Frames> object that serves as a C<Positional> for all of the
@@ -245,9 +217,7 @@ method, which also returns a list of the reified C<Frame> objects.
 =head2 hll-name
 
 =begin code :lang<raku>
-
 say $M.hll-name;     # most likely "Raku"
-
 =end code
 
 Returns the HLL language name for this bytecode.  Most likely "Raku", or
@@ -256,11 +226,9 @@ Returns the HLL language name for this bytecode.  Most likely "Raku", or
 =head2 op
 
 =begin code :lang<raku>
-
 say $M.op(0x102);     #  102 istype       w(int64),r(obj),r(obj)
 
 say $M.op("istype");  #  102 istype       w(int64),r(obj),r(obj) 
-
 =end code
 
 Attempt to create an opcode object for the given name or opcode number.
@@ -274,9 +242,7 @@ A C<Buf> with the actual opcodes.
 =head2 sc-dependencies
 
 =begin code :lang<raku>
-
 .say for $M.sc-dependencies;  # identifiers for Serialization Context
-
 =end code
 
 Returns a list of strings of the Serialization Contexts on which this
@@ -285,9 +251,7 @@ bytecode depends.
 =head2 strings
 
 =begin code :lang<raku>
-
 .say for $M.strings[^10];  # The first 10 strings on the string heap
-
 =end code
 
 Returns a L<Strings> object that serves as a C<Positional> for all of the
@@ -296,9 +260,7 @@ strings on the string heap.
 =head2 version
 
 =begin code :lang<raku>
-
 say $M.version;     # most likely 7
-
 =end code
 
 Returns the numeric version of this bytecode.  Most likely "7".
@@ -308,9 +270,7 @@ Returns the numeric version of this bytecode.  Most likely "7".
 =head2 bytecode
 
 =begin code :lang<raku>
-
 my $b = $M.bytecode;
-
 =end code
 
 Returns the C<Buf> with the bytecode.
@@ -318,11 +278,9 @@ Returns the C<Buf> with the bytecode.
 =head2 hexdump
 
 =begin code :lang<raku>
-
 say $M.hexdump($M.string-heap-offset);  # defaults to 256
 
 say $M.hexdump($M.string-heap-offset, 1024);
-
 =end code
 
 Returns a hexdump representation of the bytecode from the given byte
@@ -331,9 +289,7 @@ offset for the given number of bytes (256 by default).
 =head2 slice
 
 =begin code :lang<raku>
-
 dd $M.slice(0, 8).chrs;     # "MOARVM\r\n"
-
 =end code
 
 Returns a C<List> of unsigned 32-bit integers from the given offset and
@@ -344,9 +300,7 @@ defaults to C<256> if not specified.
 =head2 str
 
 =begin code :lang<raku>
-
 say $M.str(76);  # Raku or nqp
-
 =end code
 
 Returns the string of which the index is the given offset.
@@ -354,9 +308,7 @@ Returns the string of which the index is the given offset.
 =head2 subbuf
 
 =begin code :lang<raku>
-
 dd $M.subbuf(0, 8).decode;  # "MOARVM\r\n"
-
 =end code
 
 Calls C<subbuf> on the C<bytecode> and returns the result.  Basically a
@@ -365,9 +317,7 @@ shortcut for C<$M.bytecode.subbuf(...)>.
 =head2 uint16
 
 =begin code :lang<raku>
-
 my $i = $M.uint16($offset);
-
 =end code
 
 Returns the unsigned 16-bit integer value at the given offset in the
@@ -376,11 +326,9 @@ bytecode.
 =head2 uint16s
 
 =begin code :lang<raku>
-
 my @values := = $M.uint16s($M.string-heap-offset);  # 16 entries
 
 my @values := $M.uint16s($M.string-heap-offset, $entries);
-
 =end code
 
 Returns an unsigned 16-bit integer array for the given number of
@@ -390,9 +338,7 @@ defaults to 16 if not specified.
 =head2 uint32
 
 =begin code :lang<raku>
-
 my $i = $M.uint32($offset);
-
 =end code
 
 Returns the unsigned 32-bit integer value at the given offset in the
@@ -401,11 +347,9 @@ bytecode.
 =head2 uint32s
 
 =begin code :lang<raku>
-
 my @values := = $M.uint32s($offset);  # 16 entries
 
 my @values := $M.uint32s($offset, $entries);
-
 =end code
 
 Returns an unsigned 32-bit integer array for the given number of
@@ -678,9 +622,7 @@ A C<Map> of additional adverb strings.
 =head3 bytes
 
 =begin code :lang<raku>
-
 my $bytes := $op.bytes($frame, $offset);
-
 =end code
 
 The number of bytes this op occupies in memory.  Returns B<0> if the
@@ -707,11 +649,9 @@ The name of this operation.
 =head3 new
 
 =begin code :lang<raku>
-
 my $op = MoarVM::Op.new(0);
 
 my $op = MoarVM::Op.new("no_op");
-
 =end code
 
 Return an instantiated C<MoarVM::Op> object from the given name or
@@ -732,7 +672,7 @@ Elizabeth Mattijsen <liz@raku.rocks>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2024, 2025 Elizabeth Mattijsen
+Copyright 2024, 2025, 2026 Elizabeth Mattijsen
 
 Source can be located at: https://github.com/lizmat/MoarVM-Bytecode .
 Comments and Pull Requests are welcome.
