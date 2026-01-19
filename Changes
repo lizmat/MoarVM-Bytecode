@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.25  2026-01-19T22:50:32+01:00
     - Make sure a method .elems exist in order to cope
       with new Array::Agnostic strictness
     - Modernize META information

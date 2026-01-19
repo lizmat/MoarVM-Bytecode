@@ -3,6 +3,8 @@
   "authors": [
     "Elizabeth Mattijsen"
   ],
+  "build-depends": [
+  ],
   "depends": {
     "runtime": {
       "requires": [
@@ -20,6 +22,9 @@
     "MoarVM::Ops": "lib/MoarVM/Ops.rakumod"
   },
   "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://github.com/lizmat/MoarVM-Bytecode.git",
   "support": {
     "bugtracker": "https://github.com/lizmat/MoarVM-Bytecode/issues",
     "email": "liz@raku.rocks",
@@ -29,5 +34,7 @@
     "MOARVM",
     "UTIL"
   ],
-  "version": "0.0.24"
+  "test-depends": [
+  ],
+  "version": "0.0.25"
 }
