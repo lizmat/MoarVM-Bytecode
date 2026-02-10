@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.26  2026-02-10T11:57:03+01:00
     - Bump dependencies
     - Update ops list
 
