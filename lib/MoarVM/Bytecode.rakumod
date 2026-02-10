@@ -15,8 +15,8 @@ my sub format02x(uint8 $value) {
 }
 
 use MoarVM::Ops;
-use List::Agnostic:ver<0.0.3+>:auth<zef:lizmat>;
-use paths:ver<10.1+>:auth<zef:lizmat>;
+use List::Agnostic:ver<0.0.6+>:auth<zef:lizmat>;
+use paths:ver<10.2+>:auth<zef:lizmat>;
 
 my constant @localtype = <
   0      int8 int16 int32 int64 num32 num64 str    obj    9
@@ -403,7 +403,7 @@ my class MoarVM::Bytecode::Strings does List::Agnostic {
         self.bless(:$M, :@offsets, :$elems, :bytes($offset - $start))
     }
 
-    method AT-POS(Int:D $pos) {
+    method AT-POS(Int:D $pos) {  # required by List::Agnostic
         if $pos < 0 || $pos >= $!elems {
             Nil
         }
@@ -416,7 +416,7 @@ my class MoarVM::Bytecode::Strings does List::Agnostic {
         }
     }
 
-    method elems() { $!elems }  # required by Array::Agnostic
+    method elems() { $!elems }  # required by List::Agnostic
 
     method gist(MoarVM::Bytecode::Strings:D:) {
         "String Heap: $!elems different strings, $!bytes bytes"
@@ -487,7 +487,7 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         )
     }
 
-    method AT-POS(Int:D $pos) {
+    method AT-POS(Int:D $pos) {  # required by List::Agnostic
         if $pos < 0 || $pos >= $!elems {
             Nil
         }
@@ -498,7 +498,7 @@ my class MoarVM::Bytecode::Frames does List::Agnostic {
         }
     }
 
-    method elems() { $!elems }  # required by Array::Agnostic
+    method elems() { $!elems }  # required by List::Agnostic
 
     method reify-all(:$batch = 4) {
         my @frames is List = @!frames.pairs.hyper(:$batch).map: {

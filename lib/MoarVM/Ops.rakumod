@@ -1,5 +1,5 @@
 #- start of generated part of Ops  ---------------------------------------------
-#- Generated on 2024-04-28T13:24:02+02:00 by ./makeOPS.raku
+#- Generated on 2026-02-10T11:45:06+01:00 by ./makeOPS.raku
 #- PLEASE DON'T CHANGE ANYTHING BELOW THIS LINE
 my constant @ops =
   'no_op',
@@ -1015,17 +1015,17 @@ my constant %ops =
   'jumplist', ':j int64 r(int64)',
   'getlex', 'w(`1) rl(`1) :pure :deoptonepoint :logged',
   'bindlex', 'wl(`1) r(`1)',
-  'getlex_ni', 'w(int64) str :pure :noinline :invokish :throwish :deoptallpoint',
-  'getlex_nn', 'w(num64) str :pure :noinline :invokish :throwish :deoptallpoint',
-  'getlex_ns', 'w(str) str :pure :noinline :invokish :throwish :deoptallpoint',
-  'getlex_no', 'w(obj) str :pure :deoptonepoint :logged :noinline :invokish :throwish :deoptallpoint',
+  'getlex_ni', 'w(int64) str :pure :noinline',
+  'getlex_nn', 'w(num64) str :pure :noinline',
+  'getlex_ns', 'w(str) str :pure :noinline',
+  'getlex_no', 'w(obj) str :pure :deoptonepoint :logged :noinline',
   'bindlex_ni', 'str r(int64) :noinline',
   'bindlex_nn', 'str r(num64) :noinline',
   'bindlex_ns', 'str r(str) :noinline',
   'bindlex_no', 'str r(obj) :noinline',
   'getlex_ng', 'w(obj) r(str) :pure :noinline :useshll',
   'bindlex_ng', 'r(str) r(obj) :noinline :useshll',
-  'getdynlex', 'w(obj) r(str) :pure :noinline :useshll :invokish :throwish :deoptallpoint',
+  'getdynlex', 'w(obj) r(str) :pure :noinline :useshll',
   'binddynlex', 'r(str) r(obj) :noinline',
   'setlexvalue', 'r(obj) str r(obj) int16',
   'lexprimspec', 'w(int64) r(obj) r(str) :pure',
@@ -1499,9 +1499,9 @@ my constant %ops =
   'dropsym', 'r(obj)',
   'loadext', 'r(str) r(str)',
   'backendconfig', 'w(obj) :pure :confprog',
-  'getlexouter', 'w(obj) r(str) :pure :noinline :useshll :invokish :throwish :deoptallpoint',
+  'getlexouter', 'w(obj) r(str) :pure :noinline :useshll',
   'getlexrel', 'w(obj) r(obj) r(str) :pure :useshll',
-  'getlexreldyn', 'w(obj) r(obj) r(str) :pure :useshll :invokish :throwish :deoptallpoint',
+  'getlexreldyn', 'w(obj) r(obj) r(str) :pure :useshll',
   'getlexrelcaller', 'w(obj) r(obj) r(str) :pure :useshll',
   'getlexcaller', 'w(obj) r(str) :pure :noinline :useshll',
   'bitand_s', 'w(str) r(str) r(str) :pure',
@@ -1573,7 +1573,7 @@ my constant %ops =
   'bindpos3d_u', 'r(obj) r(int64) r(int64) r(int64) r(uint64) :specializable',
   'asyncreadbytes', 'w(obj) r(obj) r(obj) r(obj) r(obj) r(obj)',
   'getlexstatic_o', 'w(obj) r(str) :pure :noinline :specializable :cache',
-  'getlexperinvtype_o', 'w(obj) r(str) :pure :logged :specializable :invokish :throwish :deoptallpoint',
+  'getlexperinvtype_o', 'w(obj) r(str) :pure :logged :specializable',
   'execname', 'w(str)',
   'const_i64_16', 'w(int64) int16 :pure :confprog',
   'const_i64_32', 'w(int64) int32 :pure :confprog',
@@ -1831,7 +1831,7 @@ my constant %ops =
   'sp_decont', '.s w(obj) r(obj) :pure :invokish :maycausedeopt',
   'sp_getlex_o', '.s w(obj) rl(obj) :pure',
   'sp_getlex_ins', '.s w(`1) rl(`1) :pure',
-  'sp_getlex_no', '.s w(obj) str :pure :noinline :invokish :throwish',
+  'sp_getlex_no', '.s w(obj) str :pure :noinline',
   'sp_bindlex_in', '.s wl(`1) r(`1)',
   'sp_bindlex_os', '.s wl(`1) r(`1)',
   'sp_getlexstatic_o', '.s w(obj) r(str) sslot uint32 :pure',
@@ -1967,8 +1967,8 @@ my constant %annotation2name =
 ;
 
 my constant @adverbs = %ops.values.map( {
-    (quietly .head.starts-with("." | ":") ?? .skip !! $_)
-      .map({ .substr(1) if .starts-with(":") }).Slip
+    (quietly .head.starts-with("." | ":") ?? .skip !! $_)  # UNCOVERABLE
+      .map({ .substr(1) if .starts-with(":") }).Slip  # UNCOVERABLE
 } ).unique.sort;
 
 # Since most Op objects are singletons, use this as a compile time store.
