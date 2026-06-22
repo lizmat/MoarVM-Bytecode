@@ -1955,7 +1955,7 @@ my constant %ops =
 #- PLEASE DON'T CHANGE ANYTHING ABOVE THIS LINE
 #- end of generated part of Ops  -----------------------------------------------
 
-my constant %op2index = @ops.kv.reverse;
+my constant %op2index = eager @ops.kv.reverse;
 
 # The first item on each line, can be a prefix
 my constant %annotation2name =
@@ -1966,7 +1966,7 @@ my constant %annotation2name =
   "s", "spesh", 
 ;
 
-my constant @adverbs = %ops.values.map( {
+my constant @adverbs = eager %ops.values.map( {
     (quietly .head.starts-with("." | ":") ?? .skip !! $_)  # UNCOVERABLE
       .map({ .substr(1) if .starts-with(":") }).Slip  # UNCOVERABLE
 } ).unique.sort;

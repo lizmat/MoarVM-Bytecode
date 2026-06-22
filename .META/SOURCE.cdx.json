@@ -4,7 +4,7 @@
   "specVersion": "1.6",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-02-10T10:57:34+00:00",
+    "timestamp": "2026-06-22T20:45:29+00:00",
     "lifecycles": [
       {
         "phase": "pre-build"
@@ -19,7 +19,7 @@
     "component": {
       "type": "library",
       "mime-type": "text/plain",
-      "bom-ref": "pkg:raku/zef:lizmat/MoarVM::Bytecode@0.0.26",
+      "bom-ref": "pkg:raku/zef:lizmat/MoarVM::Bytecode@0.0.27",
       "authors": [
         {
           "bom-ref": "ElizabethMattijsen",
@@ -29,7 +29,7 @@
       "publisher": "zef",
       "group": "zef:lizmat",
       "name": "MoarVM::Bytecode",
-      "version": "0.0.26",
+      "version": "0.0.27",
       "description": "Provide introspection into MoarVM bytecode",
       "scope": "required",
       "licenses": [
@@ -41,14 +41,14 @@
           }
         }
       ],
-      "purl": "pkg:raku/zef:lizmat/MoarVM::Bytecode@0.0.26",
+      "purl": "pkg:raku/zef:lizmat/MoarVM::Bytecode@0.0.27",
       "externalReferences": [
         {
           "url": "https://github.com/lizmat/MoarVM-Bytecode",
           "type": "distribution"
         },
         {
-          "url": "https://raku.land/zef:lizmat/MoarVM::Bytecode?v=0.0.26",
+          "url": "https://raku.land/zef:lizmat/MoarVM::Bytecode?v=0.0.27",
           "type": "documentation"
         },
         {
@@ -60,7 +60,7 @@
           "type": "license"
         },
         {
-          "url": "https://github.com/lizmat/MoarVM-Bytecode/archive/refs/tags/0.0.26.zip",
+          "url": "https://github.com/lizmat/MoarVM-Bytecode/archive/refs/tags/0.0.27.zip",
           "type": "source-distribution"
         },
         {
@@ -87,7 +87,7 @@
         {
           "type": "library",
           "mime-type": "text/plain",
-          "bom-ref": "pkg:raku/zef:lizmat/SBOM::Raku@0.0.12",
+          "bom-ref": "pkg:raku/zef:lizmat/SBOM::Raku@0.0.13",
           "authors": [
             {
               "bom-ref": "ElizabethMattijsen",
@@ -97,7 +97,7 @@
           "publisher": "zef",
           "group": "zef:lizmat",
           "name": "SBOM::Raku",
-          "version": "0.0.12",
+          "version": "0.0.13",
           "description": "Raku specific SBOM functionality",
           "scope": "required",
           "licenses": [
@@ -109,14 +109,14 @@
               }
             }
           ],
-          "purl": "pkg:raku/zef:lizmat/SBOM::Raku@0.0.12",
+          "purl": "pkg:raku/zef:lizmat/SBOM::Raku@0.0.13",
           "externalReferences": [
             {
               "url": "https://github.com/lizmat/SBOM-Raku",
               "type": "distribution"
             },
             {
-              "url": "https://raku.land/zef:lizmat/SBOM::Raku?v=0.0.12",
+              "url": "https://raku.land/zef:lizmat/SBOM::Raku?v=0.0.13",
               "type": "documentation"
             },
             {
@@ -128,7 +128,7 @@
               "type": "license"
             },
             {
-              "url": "https://github.com/lizmat/SBOM-Raku/archive/refs/tags/0.0.12.zip",
+              "url": "https://github.com/lizmat/SBOM-Raku/archive/refs/tags/0.0.13.zip",
               "type": "source-distribution"
             },
             {
@@ -158,7 +158,7 @@
       "publisher": "Rakudo Core Developers",
       "group": "Rakudo Core Developers",
       "name": "Rakudo",
-      "version": "2026.01-12-gc5cfd69c6",
+      "version": "2026.05-143-g66b4e5351",
       "description": "The Rakudo™ Compiler implementing the Raku® Programming Language",
       "scope": "required",
       "licenses": [
@@ -181,7 +181,7 @@
           "type": "issue-tracker"
         },
         {
-          "url": "https://github.com/rakudo/rakudo/archive/c5cfd69c6.zip",
+          "url": "https://github.com/rakudo/rakudo/archive/66b4e5351.zip",
           "type": "source-distribution"
         },
         {
@@ -202,7 +202,7 @@
       "publisher": "The MoarVM Team",
       "group": "The MoarVM Team",
       "name": "Moar",
-      "version": "2026.01-4-g0742ba286",
+      "version": "2026.05.1-11-gc68094f8b",
       "description": "Short for \"Metamodel On A Runtime\", MoarVM is a modern virtual machine built for the Rakudo compiler and the NQP Compiler Toolchain.",
       "scope": "required",
       "licenses": [
@@ -229,7 +229,7 @@
           "type": "chat"
         },
         {
-          "url": "https://github.com/MoarVM/MoarVM.git/archive/refs/tags/0742ba286.zip",
+          "url": "https://github.com/MoarVM/MoarVM.git/archive/refs/tags/c68094f8b.zip",
           "type": "source-distribution"
         }
       ]
@@ -237,7 +237,7 @@
     {
       "type": "library",
       "mime-type": "text/plain",
-      "bom-ref": "pkg:raku/zef:lizmat/Array::Agnostic?vers=vers:raku/%3E=0.0.17",
+      "bom-ref": "pkg:raku/zef:lizmat/Array::Agnostic?vers=vers:raku/%3E=0.0.18",
       "authors": [
         {
           "bom-ref": "ElizabethMattijsen",
@@ -247,7 +247,7 @@
       "publisher": "zef",
       "group": "zef:lizmat",
       "name": "Array::Agnostic",
-      "version": "0.0.17",
+      "version": "0.0.18",
       "description": "be an array without knowing how",
       "scope": "required",
       "licenses": [
@@ -259,14 +259,14 @@
           }
         }
       ],
-      "purl": "pkg:raku/zef:lizmat/Array::Agnostic@0.0.17",
+      "purl": "pkg:raku/zef:lizmat/Array::Agnostic@0.0.18",
       "externalReferences": [
         {
           "url": "https://github.com/lizmat/Array-Agnostic",
           "type": "distribution"
         },
         {
-          "url": "https://raku.land/zef:lizmat/Array::Agnostic?v=0.0.17",
+          "url": "https://raku.land/zef:lizmat/Array::Agnostic?v=0.0.18",
           "type": "documentation"
         },
         {
@@ -278,7 +278,7 @@
           "type": "license"
         },
         {
-          "url": "https://github.com/lizmat/Array-Agnostic/archive/refs/tags/0.0.17.zip",
+          "url": "https://github.com/lizmat/Array-Agnostic/archive/refs/tags/0.0.18.zip",
           "type": "source-distribution"
         },
         {
@@ -293,7 +293,7 @@
     {
       "type": "library",
       "mime-type": "text/plain",
-      "bom-ref": "pkg:raku/zef:lizmat/List::Agnostic?vers=vers:raku/%3E=0.0.6",
+      "bom-ref": "pkg:raku/zef:lizmat/List::Agnostic?vers=vers:raku/%3E=0.0.7",
       "authors": [
         {
           "bom-ref": "ElizabethMattijsen",
@@ -303,7 +303,7 @@
       "publisher": "zef",
       "group": "zef:lizmat",
       "name": "List::Agnostic",
-      "version": "0.0.6",
+      "version": "0.0.7",
       "description": "Be a list without knowing how",
       "scope": "required",
       "licenses": [
@@ -315,14 +315,14 @@
           }
         }
       ],
-      "purl": "pkg:raku/zef:lizmat/List::Agnostic@0.0.6",
+      "purl": "pkg:raku/zef:lizmat/List::Agnostic@0.0.7",
       "externalReferences": [
         {
           "url": "https://github.com/lizmat/List-Agnostic",
           "type": "distribution"
         },
         {
-          "url": "https://raku.land/zef:lizmat/List::Agnostic?v=0.0.6",
+          "url": "https://raku.land/zef:lizmat/List::Agnostic?v=0.0.7",
           "type": "documentation"
         },
         {
@@ -334,7 +334,7 @@
           "type": "license"
         },
         {
-          "url": "https://github.com/lizmat/List-Agnostic/archive/refs/tags/0.0.6.zip",
+          "url": "https://github.com/lizmat/List-Agnostic/archive/refs/tags/0.0.7.zip",
           "type": "source-distribution"
         },
         {
@@ -464,7 +464,7 @@
       "type": "distribution"
     },
     {
-      "url": "https://raku.land/zef:lizmat/MoarVM::Bytecode?v=0.0.26",
+      "url": "https://raku.land/zef:lizmat/MoarVM::Bytecode?v=0.0.27",
       "type": "documentation"
     },
     {
@@ -476,7 +476,7 @@
       "type": "license"
     },
     {
-      "url": "https://github.com/lizmat/MoarVM-Bytecode/archive/refs/tags/0.0.26.zip",
+      "url": "https://github.com/lizmat/MoarVM-Bytecode/archive/refs/tags/0.0.27.zip",
       "type": "source-distribution"
     },
     {
@@ -492,16 +492,16 @@
       ]
     },
     {
-      "ref": "pkg:raku/zef:lizmat/List::Agnostic?vers=vers:raku/%3E=0.0.6",
+      "ref": "pkg:raku/zef:lizmat/List::Agnostic?vers=vers:raku/%3E=0.0.7",
       "dependsOn": [
-        "pkg:raku/zef:lizmat/Array::Agnostic?vers=vers:raku/%3E=0.0.17"
+        "pkg:raku/zef:lizmat/Array::Agnostic?vers=vers:raku/%3E=0.0.18"
       ]
     },
     {
       "ref": "pkg:raku/zef:lizmat/META::verauthapi?vers=vers:raku/%3E=0.0.1"
     },
     {
-      "ref": "pkg:raku/zef:lizmat/SBOM::Raku@0.0.12",
+      "ref": "pkg:raku/zef:lizmat/SBOM::Raku@0.0.13",
       "dependsOn": [
         "Rakudo"
       ]

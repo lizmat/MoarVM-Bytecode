@@ -15,7 +15,7 @@ my sub format02x(uint8 $value) {
 }
 
 use MoarVM::Ops;
-use List::Agnostic:ver<0.0.6+>:auth<zef:lizmat>;
+use List::Agnostic:ver<0.0.7+>:auth<zef:lizmat>;
 use paths:ver<10.2+>:auth<zef:lizmat>;
 
 my constant @localtype = <
