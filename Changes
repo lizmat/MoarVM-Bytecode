@@ -1,6 +1,9 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+    - Reactivate use of Format, now that it works
+    - Fix test for extension ops
+    - Update dependncies
 
 0.0.27  2026-06-22T22:44:55+02:00
     - Workaround potential race-conditions in @-constants

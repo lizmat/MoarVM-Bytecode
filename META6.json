@@ -9,7 +9,7 @@
     "runtime": {
       "requires": [
         "List::Agnostic:ver<0.0.7+>:auth<zef:lizmat>",
-        "paths:ver<10.2+>:auth<zef:lizmat>",
+        "paths:ver<10.3+>:auth<zef:lizmat>",
         "META::verauthapi:ver<0.0.1+>:auth<zef:lizmat>"
       ]
     }

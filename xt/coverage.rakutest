@@ -1,15 +1,6 @@
 use Test::Coverage;
 
-plan 2;
-
-todo("a lot of compile-time stuff still marked as coverable");
-coverage-at-least 75;
-
-todo("a lot of compile-time stuff still marked as coverable");
-uncovered-at-most 100;
-
-source-with-coverage;
-
-report;
+todo "needs more tests";
+must-be-complete;
 
 # vim: expandtab shiftwidth=4

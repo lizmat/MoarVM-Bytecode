@@ -1,12 +1,12 @@
 # An attempt at providing introspection into the MoarVM bytecode format
 
-#use v6.e.PREVIEW;  # We use new Format support
+use v6.e.PREVIEW;  # We use new Format support
 
 # Faster formatted values!
-my &formatx   := { sprintf '%x', $_ };     # Format.new('%x');
-my &format4x  := { sprintf '%4x', $_ };    # Format.new('%4x');
-my &format8d  := { sprintf '%8d', $_ };    # Format.new('%8d');
-my &format12s := { sprintf '%-12s', $_ };  # Format.new('%-12s');
+my &formatx   := Format.new('%x');
+my &format4x  := Format.new('%4x');
+my &format8d  := Format.new('%8d');
+my &format12s := Format.new('%-12s');
 
 # Even faster '%02x' formatting
 my str @lookup = <0 1 2 3 4 5 6 7 8 9 a b c d e f>;
@@ -16,7 +16,7 @@ my sub format02x(uint8 $value) {
 
 use MoarVM::Ops;
 use List::Agnostic:ver<0.0.7+>:auth<zef:lizmat>;
-use paths:ver<10.2+>:auth<zef:lizmat>;
+use paths:ver<10.3+>:auth<zef:lizmat>;
 
 my constant @localtype = <
   0      int8 int16 int32 int64 num32 num64 str    obj    9
@@ -47,8 +47,7 @@ my sub dumphex(Buf:D $blob, uint $start, uint $bytes, @on?) {
     my uint $base = $start +& 0x0fffffff0;
     my uint $last = $start + $bytes;
 
-    my &format-offset := { sprintf '%' ~ formatx($last).chars ~ 'x', $_ };
-    # Format.new('%' ~ formatx($last).chars ~ 'x');
+    my &format-offset := Format.new('%' ~ formatx($last).chars ~ 'x');
 
     sub with-highlight(uint $offset is copy) {
         my str @parts = format-offset($offset), "";
@@ -737,7 +736,6 @@ class MoarVM::Bytecode does Iterable {
             my $name       := $strings[$bytecode.read-uint32($offset, LE)];
             my $descriptor := $bytecode.subbuf($offset + 4, 8);
             my $bytes := 2 + 2 * $descriptor.grep(* > 0).elems;
-
             $extension-ops.push: ExtensionOp.new(
               :$name, :$index, :$bytes, :$descriptor
             );

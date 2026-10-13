@@ -1,5 +1,5 @@
 #- start of generated part of Ops  ---------------------------------------------
-#- Generated on 2026-02-10T11:45:06+01:00 by ./makeOPS.raku
+#- Generated on 2026-10-13T12:28:53+02:00 by ./makeOPS.raku
 #- PLEASE DON'T CHANGE ANYTHING BELOW THIS LINE
 my constant @ops =
   'no_op',
