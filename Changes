@@ -1,6 +1,8 @@
 Revision history for MoarVM::Bytecode
 
 {{$NEXT}}
+
+0.0.28  2026-10-13T12:34:11+02:00
     - Reactivate use of Format, now that it works
     - Fix test for extension ops
     - Update dependncies
